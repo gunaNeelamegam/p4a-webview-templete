@@ -1,0 +1,36 @@
+{
+    "80": {
+        "LUBRICATE CARTRIGE O-RING": 0,
+        "LUBRICATE TORCH O-RING": 0
+    },
+    "160": {
+        "CATRIDGE O-RING": 0,
+        "TORCH O-RING": 0
+    },
+    "320": {
+        "DO A COOLANT FLOW TEST": 0,
+        "CLEAN RADIATOR": 0,
+        "WASH COOLANT FILTER CARTRIDGE": 0
+    },
+    "480": {
+        "REPLACE COOLANT LIQUID": 0,
+        "REPLACE DMC WATER MIST CATRIDGE": 0,
+        "REPLACE H2O PUMP ACTIVE FILTER CATRIDGE": 0,
+        "TORCH COOLANT TUBE": 0,
+        "REPLACE CATRIDGE": 0,
+        "CHECK FOR COLLANT LEAKS": 0,
+        "CHECK FOR GAS LEAKS": 0
+    },
+    "960": {
+        "REPLACE COOLANT FILTER CARTRIDGE": 0
+    },
+    "2880": {
+        "REPLACE TORCH HEAD": 0
+    },
+    "3840": {
+        "REPLACE TORCH LEAD SET": 0
+    },
+    "4800": {
+        "REPLACE GAS LEAD SET": 0
+    }
+}

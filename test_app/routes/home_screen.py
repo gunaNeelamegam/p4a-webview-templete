@@ -1,3 +1,6 @@
+from routes import flask_app as app
+from flask import render_template, request
+
 print("main.py was successfully called")
 print("this is the new main.py")
 
@@ -11,43 +14,23 @@ import os
 print("imported os")
 print("contents of this dir", os.listdir("./"))
 
-from flask import Flask, render_template, request, Markup
 
 print("imported flask etc")
 
 from constants import RUNNING_ON_ANDROID
 from tools import (
-    run_test_suites_into_buffer,
-    get_failed_unittests_from,
     vibrate_with_pyjnius,
     get_android_python_activity,
     set_device_orientation,
     setup_lifecycle_callbacks,
+    ShowToast,
 )
 
 
-app = Flask(__name__)
 setup_lifecycle_callbacks()
 service_running = False
 TESTS_TO_PERFORM = dict()
 NON_ANDROID_DEVICE_MSG = "Not running from Android device"
-
-
-def get_html_for_tested_modules(tested_modules, failed_tests):
-    modules_text = ""
-    for n, module in enumerate(sorted(tested_modules)):
-        print(module)
-        base_text = '<label class="{color}">{module}</label>'
-        if TESTS_TO_PERFORM[module] in failed_tests:
-            color = "text-red"
-        else:
-            color = "text-green"
-        if n != len(tested_modules) - 1:
-            base_text += ", "
-
-        modules_text += base_text.format(color=color, module=module)
-
-    return Markup(modules_text)
 
 
 def get_test_service():
@@ -77,9 +60,14 @@ def index():
     return render_template(
         "index.html",
         platform="Android" if RUNNING_ON_ANDROID else "Desktop",
-        service_running=service_running,
+        show_add={"is_show": True},
+        navigation_btns={
+            "Cuttings": "",
+            "System Info": "",
+            "Service": "",
+            "Configuration": "",
+        },
     )
-
 
 
 @app.route("/page2")
@@ -149,3 +137,35 @@ def service():
     else:
         stop_service()
     return ("", 204)
+
+
+import cv2 as cv
+from threading import Thread
+import numpy as np
+
+
+@app.route("/opencamera")
+def open_camera():
+    from kvdroid.jclass.android.graphics import Color
+    from kvdroid.tools.notification import create_notification
+    from kvdroid.tools import get_resource
+
+    create_notification(
+        small_icon=get_resource("drawable").ico_nocenstore,  # app icon
+        channel_id="1",
+        title="You have a message",
+        text="hi, just wanted to check on you",
+        ids=1,
+        channel_name=f"ch1",
+        large_icon="assets/image.png",
+        expandable=True,
+        small_icon_color=Color().rgb(
+            0x00, 0xC8, 0x53
+        ),  # 0x00 0xC8 0x53 is same as 00C853
+        big_picture="assets/image.png",
+    )
+
+
+@app.route("/showtoast")
+def show_toast():
+    return {"message": "success"}

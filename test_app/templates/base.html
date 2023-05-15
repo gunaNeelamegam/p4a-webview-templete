@@ -1,35 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-<html>
-    <head>
-        <meta charset="utf-8">
-        <link rel="stylesheet" href="{{ url_for('static', filename='flask.css') }}">
-        <title>
-        {% block title %}
-            Flask on {{ platform }}
-        {% endblock %}
-        </title>
-        
-    </head>
-    <body>
-        <header>
-            <div class="container">
-                <h1 class="logo">Flask on {{ platform }}!</h1>
-                <strong>
-                    <nav>
-                        <ul class="menu">
-                            <li><a href="{{ url_for('index') }}">Home</a></li>
-                            <li><a href="{{ url_for('page2') }}">Another Page</a></li>
-                        </ul>
-                    </nav>
-                </strong>
-            </div>
-        </header>
-
-        <div class="container">
-            {% block body %}
-            {% endblock %}
-        </div>
-
-    </body>
-</html> 
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="{{ url_for('static', filename = 'style.css') }}" rel="stylesheet" />
+    <title>IOT NODE APP</title>
+  </head>
+  <body>
+    <header>
+        <nav>
+          <ul class="menu">
+            <li>
+              <a>EASB IOT NODE</a>
+            </li>
+            <li class="version">
+              <a>v1.1</a>
+            </li>
+          </ul>
+        </nav>
+    </header>
+    <div class="main-container">
+      {% block body %}
+        {{ platform }}
+        {{ show_add.is_show }}
+      {% endblock %}
+      <img src="{{ url_for('static', filename = '/images/iotnode.png') }}" class="img-fluid" style="margin-top: 1rem;" />
+    </div>
+    {% extends 'footer.html' %}
+  </body>
+</html>

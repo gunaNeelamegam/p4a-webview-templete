@@ -23,7 +23,7 @@ def run_test_suites_into_buffer(suites):
     return terminal_output.getvalue()
 
 
-def get_images_with_extension(path=APP_PATH, extension='*.png'):
+def get_images_with_extension(path=APP_PATH, extension="*.png"):
     """
     Return a list of image files given a path and an file extension.
 
@@ -55,7 +55,7 @@ def raise_error(error):
     try:
         from widgets import ErrorPopup
     except ImportError:
-        print('raise_error:',  error)
+        print("raise_error:", error)
         return
     ErrorPopup(error_text=error).open()
 
@@ -81,7 +81,7 @@ def skip_if_not_running_from_android_device(func):
         if RUNNING_ON_ANDROID:
             return func(*arg, **kwarg)
         raise_error(
-            'Function `{func_name}` only available for android devices'.format(
+            "Function `{func_name}` only available for android devices".format(
                 func_name=func.__name__,
             ),
         )
@@ -98,7 +98,7 @@ def get_android_python_activity():
     .. warning:: This function will only be ran if executed from android"""
     from jnius import autoclass
 
-    PythonActivity = autoclass('org.kivy.android.PythonActivity')
+    PythonActivity = autoclass("org.kivy.android.PythonActivity")
     return PythonActivity.mActivity
 
 
@@ -110,8 +110,8 @@ def vibrate_with_pyjnius(time=1000):
     .. warning:: This function will only be ran if executed from android."""
     from jnius import autoclass, cast
 
-    print('Attempting to vibrate with pyjnius')
-    ANDROID_VERSION = autoclass('android.os.Build$VERSION')
+    print("Attempting to vibrate with pyjnius")
+    ANDROID_VERSION = autoclass("android.os.Build$VERSION")
     SDK_INT = ANDROID_VERSION.SDK_INT
 
     Context = autoclass("android.content.Context")
@@ -125,14 +125,15 @@ def vibrate_with_pyjnius(time=1000):
         VibrationEffect = autoclass("android.os.VibrationEffect")
         vibrator.vibrate(
             VibrationEffect.createOneShot(
-                time, VibrationEffect.DEFAULT_AMPLITUDE,
+                time,
+                VibrationEffect.DEFAULT_AMPLITUDE,
             ),
         )
     elif vibrator:
         print("Using deprecated android's vibrate (SDK < 26)")
         vibrator.vibrate(time)
     else:
-        print('Something happened...vibrator service disabled?')
+        print("Something happened...vibrator service disabled?")
 
 
 @skip_if_not_running_from_android_device
@@ -141,25 +142,35 @@ def set_device_orientation(direction):
     Modifies the app orientation for an android device.
 
     .. warning:: This function will only be ran if executed from android."""
-    if direction not in ('sensor', 'horizontal', 'vertical'):
+    if direction not in ("sensor", "horizontal", "vertical"):
         print(
-            'ERROR: asked to orient to `{direction}`, but we only support: '
-            'sensor, horizontal or vertical'.format(direction=direction)
+            "ERROR: asked to orient to `{direction}`, but we only support: "
+            "sensor, horizontal or vertical".format(direction=direction)
         )
     from jnius import autoclass
 
     activity = get_android_python_activity()
-    ActivityInfo = autoclass('android.content.pm.ActivityInfo')
+    ActivityInfo = autoclass("android.content.pm.ActivityInfo")
 
-    if direction == 'sensor':
-        activity.setRequestedOrientation(
-            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-    elif direction == 'horizontal':
-        activity.setRequestedOrientation(
-            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+    if direction == "sensor":
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+    elif direction == "horizontal":
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
     else:
-        activity.setRequestedOrientation(
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+
+
+def ShowToast():
+    from jnius import autoclass, cast
+
+    context = get_android_python_activity()
+    AndroidString = autoclass("java.lang.String")
+    Toast = autoclass("android.widget.Toast")
+    duration = Toast.LENGTH_SHORT
+    text = "Hello Toast!"
+    text_char_sequence = cast("java.lang.CharSequence", AndroidString(text))
+    toast = Toast.makeText(context, text_char_sequence, duration)
+    toast.show()
 
 
 @skip_if_not_running_from_android_device
@@ -170,9 +181,9 @@ def setup_lifecycle_callbacks():
     from android.activity import register_activity_lifecycle_callbacks
 
     register_activity_lifecycle_callbacks(
-        onActivityStarted=lambda activity: print('onActivityStarted'),
-        onActivityPaused=lambda activity: print('onActivityPaused'),
-        onActivityResumed=lambda activity: print('onActivityResumed'),
-        onActivityStopped=lambda activity: print('onActivityStopped'),
-        onActivityDestroyed=lambda activity: print('onActivityDestroyed'),
+        onActivityStarted=lambda activity: print("onActivityStarted"),
+        onActivityPaused=lambda activity: print("onActivityPaused"),
+        onActivityResumed=lambda activity: print("onActivityResumed"),
+        onActivityStopped=lambda activity: print("onActivityStopped"),
+        onActivityDestroyed=lambda activity: print("onActivityDestroyed"),
     )

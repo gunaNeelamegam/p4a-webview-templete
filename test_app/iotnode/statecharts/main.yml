@@ -1,0 +1,1092 @@
+statechart:
+  name: IoT Node App
+  preamble: |
+    ap_list_scan = True
+    is_static = False
+    ip = ""
+    wizard_node_name = ""
+    ap_name = ""
+    retry = 0
+    seconds = 2
+    is_init = True
+  root state:
+    name: iotnode
+
+    parallel states:
+      - name: rpc
+        initial: start_rpc_client
+
+        states:
+          - name: start_rpc_client
+            on entry: |
+              rpc.try_connect_start(retry_period=3)
+            transitions:
+              - target: rpc_started
+
+          - name: rpc_started
+            transitions:
+              - event: app_resumed
+                target: start_rpc_client
+
+      - name: node_ui
+        initial: home
+
+        states:
+          - name: home
+            on entry: |
+              ui.switch("home_screen", {
+                "status": status.get_connection_status().value,
+                "machines": config.machines.list(),
+                "curr_machine": config.curr_machine,
+                "data": psvalue.data,
+                "app_version": ui.get_app_version(),
+                "fault_code": psvalue.get_fault_code(psvalue.data)[0]
+              })
+
+            transitions:
+              # Gets connection status and data every poll period
+              - guard: after(config.get_poll_period())
+                target: home
+                action: rpc.pause_read_data(False)
+
+
+              - event: settings_button_pressed
+                target: settings
+                action: rpc.pause_read_data(True)
+
+
+              - event: cutting_button_pressed
+                target: cutting
+
+              - event: process_setup_button_pressed
+                target: process_setup_input
+
+              - event: service_menu_button_pressed
+                target: service_menu
+
+              - event: back_button_pressed
+                action: |
+                  ui.stop()
+
+              - event: machine_selected
+                target: iotnode
+                action: |
+                  config.curr_machine = event.value
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - target: check_for_updates
+                guard: is_init
+
+          - name: check_for_updates
+            on entry: |
+              is_init = False
+              ui.check_for_updates()
+
+            transitions:
+              - target: home
+
+          - name: node_config_intro
+            on entry: |
+              ui.switch("node_config_intro_screen")
+
+            transitions:
+              - event: next_button_pressed
+                target: ap_connection
+                guard: config.validate_add_machine(
+                  machine_state.make_initial_machine(name=event.value)).valid
+                action: |
+                  wizard_node_name = event.value
+                  config.machines.add(machine_state.get_values_config())
+                  config.save(CONF_FNAME)
+                  config.curr_machine = event.value
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - event: ok_button_pressed
+                target: ap_connection
+                action: |
+                  config.machines.update(machine_state.get_values_config())
+                  config.save(CONF_FNAME)
+                  config.curr_machine = wizard_node_name
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - event: next_button_pressed
+                target: node_config_intro
+                guard: not config.validate_add_machine(
+                  machine_state.make_initial_machine(name=event.value)).valid
+                action: |
+                  err_msg = config.validate_add_machine(machine_state.get_values_config()).reason
+                  buttons = {"cancel_button": "Cancel", "ok_button": "OK"}
+                  ui.show_popup("Error", err_msg, buttons)
+                  wizard_node_name = event.value
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: ap_connection
+            on entry: |
+              ui.switch("ap_connection_screen", {
+                "iot_node_name": wizard_node_name,
+                "prompt_text": 'Go to WiFi setting of your device and select the WiFi network named "UC_IOT_{}".'.format(wizard_node_name),
+                "success_text": "Once connected press next."
+              })
+
+            transitions:
+              - event: next_button_pressed
+                target: connection
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: connection
+            on entry: |
+              ui.switch("connection_screen")
+              rpc.run_check_connection_task()
+
+            transitions:
+              - event: pong_received
+                target: select_a_network_scan
+
+              - event: error
+                guard: retry < 2
+                target: connection
+                action: |
+                  retry += 1
+
+              - event: error
+                guard: retry == 2
+                target: connection_retry
+                action: |
+                  retry = 0
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: connection_retry
+            on entry: |
+              err_msg = "Error connecting to the '{}'.\nDo you want to retry?".format(wizard_node_name)
+              buttons = {"cancel_button": "Cancel", "retry_button": "Retry"}
+              ui.show_popup("Confirm", err_msg, buttons)
+
+            transitions:
+              - event: retry_button_pressed
+                target: connection
+
+              - event: cancel_button_pressed
+                target: machines_mode
+
+          - name: select_a_network_scan
+            on entry: |
+              ap_list_scan = True
+
+            transitions:
+              - target: select_a_network
+
+          - name: select_a_network
+            on entry: |
+              ui.switch("node_ap_config_screen",
+                        {"ap_list": [], "scanning": ap_list_scan})
+              rpc.list_networks_start()
+
+            transitions:
+              - event: list_networks_resp
+                guard: event.value
+                target: show_aps
+                action: |
+                  ap_list_scan = False
+                  ui.switch("node_ap_config_screen",
+                            {"ap_list": event.value, "scanning": ap_list_scan})
+
+              - event: list_networks_resp
+                guard: not event.value
+                target: get_aps_wait
+
+              - event: error
+                target: list_networks_retry
+                action: |
+                  err_msg = 'Error receiving node AP list.\nPlease ensure your mobile device is connected to "UC_IOT_{}" and retry.'.format(wizard_node_name)
+                  buttons = {"cancel_button": "Cancel", "retry_button": "Retry"}
+                  ui.show_popup("Confirm", err_msg, buttons)
+
+              - event: back_button_pressed
+                target: machines_mode
+
+
+          - name: get_aps_wait
+            transitions:
+              - guard: after(5)
+                target: select_a_network_scan
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: list_networks_retry
+            transitions:
+              - event: cancel_button_pressed
+                target: machines_mode
+
+              - event: retry_button_pressed
+                target: select_a_network_scan
+
+          - name: show_aps
+            transitions:
+              - event: back_button_pressed
+                target: machines_mode
+
+              - event: refresh_button_pressed
+                target: select_a_network_scan
+
+              - event: ap_item_pressed
+                target: entering_password
+                action: |
+                  ui.switch("ap_authentication_screen", event.value)
+                  ap_name = event.value['ssid']
+
+          - name: entering_password
+            transitions:
+              - event: connect_button_pressed
+                # FIXME: Do we need password check here?
+                # guard: len(event.value[1]) >= 8 # passwd len check
+                target: selected_network
+                guard: rpc.validate_select_network_args(event.value).valid
+                action: |
+                  bssid = event.value.bssid
+                  password = event.value.password
+                  is_static = event.value.is_static
+                  ip = event.value.ip
+                  subnet = event.value.subnet
+                  gateway = event.value.gateway
+                  rpc.select_network_start(bssid, password, is_static, ip, subnet, gateway)
+
+              - event: connect_button_pressed
+                target: entering_password
+                guard: not rpc.validate_select_network_args(event.value).valid
+                action: |
+                  err_msg = rpc.validate_select_network_args(event.value).reason
+                  ui.show_popup("Error!", err_msg)
+
+              - event: cancel_button_pressed
+                target: select_a_network_scan
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: selected_network
+            transitions:
+              - event: select_network_resp
+                target: ap_disconnect
+
+              - event: error
+                target: select_a_network
+                action: |
+                  err_msg = "Configuring Node AP failed."
+                  ui.show_popup("Error!", err_msg)
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: ap_disconnect
+            on entry: |
+              ui.switch("ap_connection_screen", {
+                "prompt_text": "Pull down notification bar and tap WiFi icon to turn off WiFi" if is_android else "Open control centre and tap WiFi icon to turn off WiFi",
+                "success_text": "Once disabled press next."
+              })
+
+            transitions:
+              - event: next_button_pressed
+                target: ap_reconnection
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: ap_reconnection
+            on entry: |
+              ui.switch("ap_connection_screen", {
+                "iot_node_name": wizard_node_name,
+                "prompt_text": 'Pull down notification bar and tap WiFi icon to turn on WiFi \n Connect to "UC_IOT_{}"'.format(wizard_node_name) if is_android else 'Open control centre and tap WiFi icon to turn on WiFi.\n Connect to "UC_IOT_{}"'.format(wizard_node_name),
+                "success_text": "Once connected press next."
+              })
+
+            transitions:
+              - event: next_button_pressed
+                target: ap_password_test_init
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: ap_password_test_init
+            on entry: |
+              ui.switch("ap_password_test_screen",{"progress": 0})
+
+            transitions:
+              - guard: after(3)
+                target: ap_password_test
+                action: retry = 0
+
+          - name: ap_password_test_start
+            on entry: |
+                rpc.run_check_connection_task()
+
+            transitions:
+              - event: pong_received
+                target: ap_password_test
+
+              - event: error
+                guard: retry < 3
+                target: ap_password_test_start
+                action: retry += 1
+
+              - event: error
+                guard: retry == 3
+                target: ap_test_connection_retry
+
+          - name: ap_test_connection_retry
+            on entry: |
+              err_msg = "Error connecting to the '{}'.\nDo you want to retry?".format(wizard_node_name)
+              buttons = {"cancel_button": "Cancel", "retry_button": "Retry"}
+              ui.show_popup("Confirm", err_msg, buttons)
+
+            transitions:
+              - event: retry_button_pressed
+                target: ap_password_test_start
+
+              - event: cancel_button_pressed
+                target: machines_mode
+
+          - name: ap_password_test
+            on entry: |
+              rpc.get_node_ip_start("") if not is_static else ""
+
+            transitions:
+              - event: get_node_ip_resp
+                target: same_ap
+                guard: not is_static
+                action: |
+                  ip = event.value
+
+              - guard: is_static
+                target: same_ap
+
+              - event: error
+                target: ap_password_test
+
+              - event: ap_test_password_timeout
+                target: entering_password
+                action: |
+                  err_msg = "Unable to connect to AP '{}' or Invalid password entered.".format(ap_name)
+                  ui.show_popup("Error!", event.value if event.value else err_msg)
+                  ui.switch("ap_authentication_screen", event.value)
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: same_ap
+            on entry: |
+              ui.switch("same_ap_screen", {"ap":ap_name})
+
+            transitions:
+              - event: next_button_pressed
+                target: device_name
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: device_name
+            on entry: |
+              ui.switch("device_name_screen")
+
+            transitions:
+              - event: next_button_pressed
+                target: device_added
+                guard: ip and config.validate_add_machine(
+                  machine_state.make_initial_machine(name=event.value, ip=ip)).valid
+                action: |
+                  wizard_node_name = ""
+                  config.machines.remove(config.curr_machine)
+                  config.machines.add(machine_state.get_values_config())
+                  config.save(CONF_FNAME)
+                  config.curr_machine = event.value
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - event: ok_button_pressed
+                target: device_added
+                action: |
+                  config.machines.remove(config.curr_machine)
+                  config.machines.update(machine_state.get_values_config())
+                  config.save(CONF_FNAME)
+                  config.curr_machine = wizard_node_name
+                  config.update_last_selected_machine(LSM_FNAME)
+                  wizard_node_name = ""
+
+              - event: next_button_pressed
+                target: device_name
+                guard: ip and not config.validate_add_machine(
+                  machine_state.make_initial_machine(name=event.value, ip=ip)).valid
+                action: |
+                  err_msg = config.validate_add_machine(machine_state.get_values_config()).reason
+                  buttons = {"cancel_button": "Cancel", "ok_button": "OK"}
+                  ui.show_popup("Error", err_msg, buttons)
+                  wizard_node_name = event.value
+
+              - event: next_button_pressed
+                guard: not ip
+                action: |
+                  err_msg = "Not a valid IPv4 or IPv6"
+                  ui.show_popup("Error!", err_msg)
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: device_added
+            on entry: |
+              ui.switch("device_added_screen", {"machine_name": config.curr_machine})
+
+            transitions:
+              - event: next_button_pressed
+                target: home
+
+              - event: back_button_pressed
+                target: machines_mode
+
+          - name: settings
+            on entry: |
+              ui.switch("settings_screen", {"poll_period": str(config.poll_period),
+                                            "unit_types": config.get_unit_types(),
+                                            "current_unit_type": config.get_current_unit_type().name})
+
+            transitions:
+              - event: machine_config_button_pressed
+                target: machines
+
+              - event: wizard_config_button_pressed
+                target: node_config_intro
+
+              - event: node_ap_config_button_pressed
+                guard: config.curr_machine != ""
+                target: get_ap_list_start_scan
+
+              - event: node_ap_config_button_pressed
+                guard: config.curr_machine == ""
+                target: home
+                action: |
+                  ui.show_popup("Alert!", "Please select a machine to configure AP.")
+
+              - event: unit_type_selected
+                action: |
+                  config.set_current_unit_type(event.value)
+                  config.save(CONF_FNAME)
+
+              - event: back_button_pressed
+                target: home
+
+          - name: cutting
+            on entry: |
+              ui.switch("cutting_screen", {
+                "status": status.get_connection_status().value,
+                "machines": config.machines.list(),
+                "curr_machine": config.curr_machine,
+                "data": psvalue.data
+              })
+
+            transitions:
+              - guard: after(config.get_poll_period())
+                target: cutting
+
+              - event: machine_selected
+                target: cutting
+                action: |
+                  config.curr_machine = event.value
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - event: back_button_pressed
+                target: home
+
+          - name: service_menu
+            on entry: |
+              ui.switch("service_menu_screen", {
+                "status": status.get_connection_status().value,
+                "machines": config.machines.list(),
+                "curr_machine": config.curr_machine,
+                "data": psvalue.data,
+                "fault_code": psvalue.get_fault_code(psvalue.data)[0]
+              })
+
+            transitions:
+              - guard: after(config.get_poll_period())
+                target: service_menu
+
+              - event: service_button_pressed
+                target: service
+
+              - event: maintenance_button_pressed
+                target: maintenance
+
+              - event: cut_quality_tips_button_pressed
+                target: cut_quality_tips
+
+              - event: errors_button_pressed
+                target: errors
+
+              - event: machine_selected
+                target: service_menu
+                action: |
+                  config.curr_machine = event.value
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - event: back_button_pressed
+                target: home
+
+          - name: system_info
+            on entry: |
+              ui.switch("system_info_screen", {
+                "status": status.get_connection_status().value,
+                "machines": config.machines.list(),
+                "curr_machine": config.curr_machine,
+                "data": psvalue.data,
+              })
+
+            transitions:
+              - guard: after(config.get_poll_period())
+                target: system_info
+
+              - event: machine_selected
+                target: system_info
+                action: |
+                  config.curr_machine = event.value
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - event: back_button_pressed
+                target: service_menu
+
+          - name: service
+            on entry: |
+              ui.switch("service_screen", {
+                "status": status.get_connection_status().value,
+                "machines": config.machines.list(),
+                "curr_machine": config.curr_machine,
+                "data": psvalue.data,
+                "cutchart_revision": cutchart.cutchart_revision,
+              })
+            transitions:
+              - guard: after(config.get_poll_period())
+                target: service
+
+              - event: machine_selected
+                target: service
+                action: |
+                  config.curr_machine = event.value
+                  config.update_last_selected_machine(LSM_FNAME)
+
+              - event: cutchart_verify_button_pressed
+                target: cutchart_compare
+
+              - event: valve_check_button_pressed
+                target: service_feature
+                guard: event.value["authenticated"] == True
+
+              - event: valve_check_button_pressed
+                target: authenticate_valve_check
+                guard: event.value["authenticated"] == False
+
+              - event: back_button_pressed
+                target: service_menu
+
+          - name: machines_mode
+            on entry: |
+              if wizard_node_name:
+                config.machines.remove(wizard_node_name)
+                config.save(CONF_FNAME)
+                wizard_node_name = ""
+
+              ui.switch("machine_add_screen")
+
+            transitions:
+              - event: machine_edit_button_pressed
+                guard: event.value["is_add"] == True and event.value["scan"] == False
+                target: machine_edit
+                action: |
+                  machine_state.set_values(event.value)
+
+              - event: wizard_config_button_pressed
+                target: node_config_intro
+
+              - event: back_button_pressed
+                target: machines
+
+          - name: machines
+            on entry: |
+              ui.switch("machine_config_screen", {
+                  "machines": config.machines.get_machines(),
+                  "is_metric": config.get_current_unit_type() == UnitType.METRIC
+              })
+
+            transitions:
+              - event: add_machine_button_pressed
+                target: machines_mode
+
+              - event: machine_edit_button_pressed
+                guard: event.value["is_add"] == False
+                target: machine_edit
+                action: |
+                  machine_state.set_values(event.value)
+
+              - event: back_button_pressed
+                target: settings
+
+          - name: machine_scan
+            on entry: |
+              machine_discover.list_machine_start(10)
+              ui.switch("machine_scan_screen",
+                        {"screen_msg": "Discovering machines ...", "machines": []})
+
+            transitions:
+              - event: "list_of_machines_resp"
+                guard: not event.value
+                action: |
+                  ui.switch("machine_scan_screen",
+                            {"screen_msg": "No machines to display", "machines": event.value})
+
+              - event: "list_of_machines_resp"
+                guard: event.value
+                action: |
+                  ui.switch("machine_scan_screen",
+                            {"screen_msg": "Click on discovered machine to add.", "machines": event.value})
+
+              - event: machine_edit_button_pressed
+                target: machine_edit
+                action: |
+                  event.value["is_add"] = True
+                  machine_state.set_values(event.value)
+
+              - event: back_button_pressed
+                target: machines
+
+          - name: machine_edit
+            on entry: |
+              is_metric = config.get_current_unit_type() == UnitType.METRIC
+              ui.switch("machine_edit_screen", {
+                **machine_state.get_values_ui(),
+                "hose_value": config.hose_data(is_metric),
+                "hose_len_imp2met": config.HOSE_LENGTH_IMP2MET,
+                "is_metric": is_metric,
+              })
+
+            transitions:
+              - event: ok_button_pressed
+                guard: config.validate_add_machine(event.value).valid and machine_state.is_add
+                target: machines
+                action: |
+                  machine_state.set_values(event.value)
+                  config.machines.add(machine_state.get_values_config())
+                  config.save(CONF_FNAME)
+
+              - event: ok_button_pressed
+                guard: not config.validate_add_machine(event.value).valid and machine_state.is_add
+                target: machine_edit
+                action: |
+                  event.value["hose_length"] = (event.value["hose_length"] if is_metric else config.HOSE_LENGTH_MET2IMP[event.value["hose_length"]]) if event.value["hose_length"] else ""
+                  machine_state.set_values(event.value)
+                  err_msg = config.validate_add_machine(event.value).reason
+                  ui.show_popup("Error", err_msg)
+
+              - event: ok_button_pressed
+                guard: config.validate_machine(event.value).valid and not machine_state.is_add
+                target: machines
+                action: |
+                  machine_state.set_values(event.value)
+                  config.machines.update(machine_state.get_values_config())
+                  config.save(CONF_FNAME)
+
+              - event: ok_button_pressed
+                guard: not config.validate_machine(event.value).valid and not machine_state.is_add
+                target: machine_edit
+                action: |
+                  event.value["hose_length"] = (event.value["hose_length"] if is_metric else config.HOSE_LENGTH_MET2IMP[event.value["hose_length"]]) if event.value["hose_length"] else ""
+                  machine_state.set_values(event.value)
+                  err_msg = config.validate_machine(event.value).reason
+                  ui.show_popup("Error", err_msg)
+
+              - event: remove_machine_button_pressed
+                target: remove_machine
+
+              - event: back_button_pressed
+                guard: machine_state.is_add
+                target: machines_mode
+
+              - event: back_button_pressed
+                guard: not machine_state.is_add
+                target: machines
+
+          - name: remove_machine
+            transitions:
+              - event: ok_button_pressed
+                target: machines
+                action: |
+                  config.curr_machine = '' if machine_state.name == config.curr_machine else config.curr_machine
+                  config.update_last_selected_machine(LSM_FNAME)
+                  config.machines.remove(machine_state.name)
+                  config.save(CONF_FNAME)
+
+              - event: cancel_button_pressed
+                target: machines
+
+          #
+          # list_networks() request, triggers a scan. But the scan
+          # results are available only in a subsequent list_networks()
+          # request. When we enter the networks list screen, we
+          # trigger a list_networks() request to start the scan, and
+          # then we trigger another list_networks() to get the scan
+          # results.
+          #
+          - name: get_ap_list_start_scan
+            on entry: |
+              ap_list_scan = True
+
+            transitions:
+              - target: get_ap_list
+
+          - name: get_ap_list
+            on entry: |
+              ui.switch("node_ap_config_screen",
+                        {"ap_list": [], "scanning": ap_list_scan})
+              rpc.list_networks_start()
+            transitions:
+
+              - event: list_networks_resp
+                guard: event.value
+                target: show_ap_list
+                action: |
+                  ap_list_scan = False
+                  ui.switch("node_ap_config_screen",
+                            {"ap_list": event.value, "scanning": ap_list_scan})
+
+              - event: list_networks_resp
+                guard: not event.value
+                target: get_ap_wait
+
+
+              - event: error
+                target: list_network_retry_confirm
+                action: |
+                  err_msg = "Error receiving node AP list.\nDo you want to retry?"
+                  buttons = {"cancel_button": "Cancel", "retry_button": "Retry"}
+                  ui.show_popup("Confirm", err_msg, buttons)
+
+              - event: back_button_pressed
+                target: settings
+
+          - name: get_ap_wait
+            transitions:
+              - guard: after(5)
+                target: get_ap_list_start_scan
+
+              - event: back_button_pressed
+                target: settings
+
+          - name: list_network_retry_confirm
+            transitions:
+              - event: cancel_button_pressed
+                target: settings
+
+              - event: retry_button_pressed
+                target: get_ap_list_start_scan
+
+          - name: show_ap_list
+            transitions:
+              - event: back_button_pressed
+                target: settings
+
+              - event: refresh_button_pressed
+                target: get_ap_list_start_scan
+
+              - event: ap_item_pressed
+                target: enter_password
+                action: |
+                  ui.switch("ap_auth_screen", event.value)
+
+
+          - name: enter_password
+            transitions:
+              - event: connect_button_pressed
+                # FIXME: Do we need password check here?
+                # guard: len(event.value[1]) >= 8 # passwd len check
+                target: select_network
+                guard: rpc.validate_select_network_args(event.value).valid
+                action: |
+                  bssid = event.value.bssid
+                  password = event.value.password
+                  is_static = event.value.is_static
+                  ip = event.value.ip
+                  subnet = event.value.subnet
+                  gateway = event.value.gateway
+                  rpc.select_network_start(bssid, password, is_static, ip, subnet, gateway)
+
+              - event: connect_button_pressed
+                target: enter_password
+                guard: not rpc.validate_select_network_args(event.value).valid
+                action: |
+                  err_msg = rpc.validate_select_network_args(event.value).reason
+                  ui.show_popup("Error!", err_msg)
+
+              - event: cancel_button_pressed
+                target: get_ap_list_start_scan
+
+              - event: back_button_pressed
+                target: get_ap_list
+
+          - name: select_network
+            transitions:
+              - event: select_network_resp
+                target: get_ap_list
+
+              - event: error
+                target: get_ap_list
+                action: |
+                  err_msg = "Configuring Node AP failed."
+                  ui.show_popup("Error!", err_msg)
+
+              - event: back_button_pressed
+                target: get_ap_list
+
+          - name: authenticate_valve_check
+            transitions:
+              - event: confirm_button_pressed
+                target: service_feature
+                guard: event.value["success"] == True
+
+              - event: cancel_button_pressed
+                target: service
+
+          - name: process_setup_input
+            on entry: |
+              ui.switch("process_setup_input_screen",
+                        {"use_metric": config.get_current_unit_type() == UnitType.METRIC})
+
+            transitions:
+              - event: submit_button_pressed
+                target: process_setup_thc
+                action: |
+                  val = {
+                    "use_metric": config.get_current_unit_type() == UnitType.METRIC,
+                    "param_list": event.value,
+                    "is_cutting": True
+                  }
+
+              - event: back_button_pressed
+                target: home
+
+          - name: process_setup_thc
+            on entry: ui.switch("process_setup_thc_screen", val)
+            transitions:
+              - event: consumable_button_pressed
+                target: process_setup_consumables
+                action: |
+                  current_machine = config.machines.get(config.curr_machine) if config.curr_machine else None
+                  torch_style = current_machine.get("torch_style") if current_machine else None
+                  ui.switch("process_setup_consumables_screen", {
+                    "torch_style": torch_style if torch_style else "21",
+                    "param_list": event.value
+                  })
+
+              - event: marking_button_pressed
+                target: marking_process
+                action: |
+                  val["is_cutting"] = False
+                  ui.switch("process_setup_thc_screen",val)
+
+              - event: back_button_pressed
+                target: process_setup_input
+
+          - name: marking_process
+            transitions:
+              - event: download_button_pressed
+                target: cutchart_export
+                action: |
+                 ui.switch("process_setup_loading_screen", {"param_data": event.value})
+
+              - event: consumable_button_pressed
+                target: process_setup_consumables
+                action: |
+                  ui.switch("process_setup_consumables_screen", {"param_list": event.value})
+
+
+              - event: back_button_pressed
+                target: process_setup_thc
+                action: val["is_cutting"] = True
+
+          - name: process_setup_consumables
+
+            transitions:
+              - event: back_button_pressed
+                target: process_setup_thc
+
+              - event: download_button_pressed
+                target: cutchart_export
+                action: |
+                 ui.switch("process_setup_loading_screen", {"param_data": event.value})
+
+          - name: cutchart_download
+
+            transitions:
+              - guard: after(seconds)
+                target: home
+
+          - name: cutchart_export
+            on entry: |
+              ui.switch("process_setup_loading_screen", {"progress": 0})
+
+            transitions:
+              - event: download
+                action: |
+                  rpc.set_params_start(event.value)
+                  rpc.pause_read_data(True)
+
+              - event: sent_param_list
+                target: cutchart_download
+
+              - event: error
+                target: cutchart_export_retry
+                action: |
+                  err_msg = "Error downloading cutchart values.\nDo you want to retry?"
+                  buttons = {"cancel_button": "Cancel", "retry_button": "Retry"}
+                  ui.show_popup("Confirm", err_msg, buttons)
+
+              - event: back_button_pressed
+                target: process_setup_thc
+                action: rpc.pause_read_data(False)
+
+          - name: cutchart_export_retry
+            transitions:
+              - event: cancel_button_pressed
+                target: process_setup_thc
+
+              - event: retry_button_pressed
+                target: cutchart_export
+
+          - name: cutchart_compare
+            on entry: |
+              ui.switch("cutchart_verify_loading_screen", {"progress": 0})
+              rpc.pause_read_data(True)
+              rpc.get_process_id()
+
+            transitions:
+              - event: got_param_list
+                action: |
+                  ui.switch("cutchart_verify_loading_screen", {"obtained": event.value})
+                  rpc.pause_read_data(False)
+
+              - event: got_process_id
+                action: |
+                  ui.switch("cutchart_verify_loading_screen", {"process_id": event.value})
+
+              - event: get_param_list
+                action: |
+                  rpc.get_param_list_start(event.value)
+
+              - event: cutchart_compare_data_received
+                action: |
+                  ui.switch("cutchart_compare_screen", {"param_id_val_dict": event.value[0], "obtained": event.value[1]})
+
+              - event: error
+                target: cutting_compare_retry
+                action: |
+                  err_msg = "Error receiving cutchart comparison values.\nDo you want to retry?"
+                  buttons = {"cancel_button": "Cancel", "retry_button": "Retry"}
+                  ui.show_popup("Confirm", err_msg, buttons)
+
+              - event: back_button_pressed
+                target: service
+
+          - name: cutting_compare_retry
+            transitions:
+              - event: cancel_button_pressed
+                target: service
+
+              - event: retry_button_pressed
+                target: cutchart_compare
+
+          - name: service_feature
+            on entry: |
+              ui.switch("service_feature_screen", {"param_ids": []})
+
+            transitions:
+              - event: param_change
+                action: |
+                  rpc.set_params_start(event.value)
+
+              - event: get_service
+                action: |
+                  rpc.get_params_start(event.value)
+
+              - event: got_service_data
+                action: |
+                  ui.switch("service_feature_screen", {'param_state': event.value})
+
+              - event: error
+                target: service_feature_retry
+                action: |
+                  err_msg = "Error receiving service feature values.\nDo you want to retry?"
+                  buttons = {"cancel_button": "Cancel", "retry_button": "Retry"}
+                  ui.show_popup("Confirm", err_msg, buttons)
+
+              - event: back_button_pressed
+                target: service
+
+          - name: service_feature_retry
+            transitions:
+              - event: cancel_button_pressed
+                target: service
+
+              - event: retry_button_pressed
+                target: service_feature
+
+          - name: maintenance
+            on entry: |
+              ui.switch("maintenance_screen", {"maintenance_link": maintenance_menu.get_maintenance_links()})
+ 
+            transitions:
+              - event: maintenance_schedule_button_pressed
+                target: maintenance_schedule
+
+              - event: back_button_pressed
+                target: service_menu
+
+          - name: cut_quality_tips
+            on entry: |
+              ui.switch("cut_quality_tips_screen")
+
+            transitions:
+              - event: back_button_pressed
+                target: service_menu
+
+          - name: errors
+            on entry: |
+              fault = psvalue.get_fault_code(psvalue.data)[1]
+              ui.switch("errors_screen", {"error_code": fault if fault != "" else "Select Error Code"})
+
+            transitions:
+              - event: error_submit_button_pressed
+                target: error_information
+                action: |
+                  ui.switch("error_information", {"code": event.value})
+
+              - event: back_button_pressed
+                target: service_menu
+
+          - name: error_information
+
+            transitions:
+              - event: back_button_pressed
+                target: errors
+
+          - name: maintenance_schedule
+            on entry: |
+              ui.switch("maintenance_schedule_screen", {"current_notifications": maintenance_scheduler.notify(psvalue.data["ah"])})
+            transitions:
+
+              - event: mark_as_serviced_button_pressed
+                target: maintenance_schedule
+                action: |
+                  maintenance_scheduler.save(LMH_FNAME, event.value)
+
+              - event: back_button_pressed
+                target: maintenance

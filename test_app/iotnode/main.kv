@@ -1,0 +1,3077 @@
+#:kivy 2.0
+#: import Factory kivy.factory.Factory
+#: import Window kivy.core.window.Window
+#: import NetworkParams iotnode.netparams.NetworkParams
+#: import hex_code kivy.utils.get_color_from_hex
+#: set title_theme "#d9d9d6"
+#: set actionbar_theme "#215732"
+#: set background_theme "#ffffff"
+#: set text_button_theme "#3f4443"
+#: set drop_down_theme "#585858"
+#: set push_button_theme "#14430e"
+#: set green (0, 1, 0, 1)
+#: set red (1, 0, 0, 1)
+#: set yellow (1, 1, 0, 1)
+#: set default_height sp(50)
+
+<IoTButton>:
+    background_normal: ""
+    on_press:
+        app.send_event(self.name + "_pressed", self.event_data, self.reverse)
+
+<Theme@Widget>:
+    theme: actionbar_theme
+    canvas.before:
+        Color:
+            rgba: hex_code(root.theme)
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+<AutoSelectSpinner@Spinner>:
+    name: ""
+    on_values:
+        self.text = self.values[0] if len(self.values) == 1 else self.text
+    option_cls: Factory.get("ProcessSetupOptionWidget")
+
+<SpinnerOptionWidget@SpinnerOption>:
+    text_size: self.width, None
+    halign: "center"
+    borders: 5, 'solid', (1,0,0,1)
+    canvas.before:
+        Color:
+            rgba: 0,0,0,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<ProcessSetupOptionWidget@SpinnerOption>:
+    text_size: self.width, None
+    halign: "center"
+    borders: 5, 'solid', (1,0,0,1)
+    canvas.before:
+        Color:
+            rgba: 0,0,0,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<LabelButton@Theme>:
+    color: hex_code(background_theme)
+    on_press:
+        app.send_event(self.name + "_pressed", self.event_data, self.reverse)
+
+<CommandButton@IoTButton>:
+    size_hint_x: None
+    width: sp(100)
+    text_size: self.size
+    font_size: "30sp"
+    valign: "middle"
+    halign: "center"
+    background_color: hex_code(actionbar_theme)
+
+<MenuButton@IoTButton>:
+    size_hint_y: None
+    height: default_height * 1.5
+    background_color: hex_code(text_button_theme)
+
+<IotBaseLabel>:
+    text_size: self.size
+    halign: "center"
+    valign: "middle"
+    markup: True
+    color: text_button_theme
+
+<IotErrorLabel@IotBaseLabel>:
+    text_size: self.size
+    halign: "left"
+    size_hint_y: None
+    height: 2.5 * self.font_size
+
+<IotScreenLabel@IotBaseLabel>:
+    font_size: "20sp"
+    text_size: self.width, None
+    size_hint_y: None
+    height: self.texture_size[1]
+    padding: [10, 10]
+
+<IotParamLabel@IotBaseLabel>:
+    text_size: self.size
+    halign: "left"
+
+
+<NoMaintainLabel>:
+    size_hint: 1, 1
+    # size_hint_y: None
+    text_size: self.size
+    halign: "left"
+    valign: "middle"
+    markup: True
+    color: text_button_theme
+    padding: [10, 10]
+
+<MenuCheckBox>:
+    active: False
+    color: "green"
+    width: "10"
+
+<MenuRadioBoxLabel@BoxLayout>:
+    text: ""
+    group: ""
+    halign: "left"
+    active: False
+
+    MenuCheckBox:
+        group: root.group
+        size_hint_max_x: sp(30)
+        halign: root.halign
+        allow_no_selection: False
+        active: root.active
+        on_active: root.active = self.active
+
+    IotBaseLabel:
+        text: root.text
+        halign: root.halign
+
+<MenuCheckBoxLabel@BoxLayout>:
+    text: ""
+    active: True
+
+    MenuCheckBox:
+        size_hint_max_x: sp(50)
+        halign: "left"
+        active: root.active
+        on_active: root.active = self.active
+
+    IotBaseLabel:
+        text: root.text
+        halign: "left"
+
+<ConnectionStatus@IotBaseLabel+Theme>:
+    color: hex_code(background_theme)
+
+
+<ServiceStatusBtn@MenuButton+IotBaseLabel+Theme>:
+    btn_text: ""
+    fault_code: ""
+    fault_text: "[color=#ff4040][size=15][b][{}][/b][/size][/color]".format(self.fault_code)
+    text: self.btn_text if self.fault_code is "" else "{} {}".format(self.btn_text, self.fault_text)
+    size_hint_y: None
+    height: default_height * 1.5
+    color: hex_code(background_theme)
+    background_color: hex_code(text_button_theme)
+
+<ProcessLabel@IotBaseLabel>:
+    halign: "left"
+    padding_x: "20dp"
+
+<ProcessValueBox@BoxLayout>:
+    process_value: ""
+    is_boolean: False
+    text_color: "#43b02a" if self.process_value == "1" else "#FF4040"
+    fa_text: "\uF111"
+
+    ProcessLabel:
+        text: root.fa_text if root.is_boolean else root.process_value
+        font_name: "fa" if root.is_boolean else "Roboto"
+        color: root.text_color if root.is_boolean else self.color
+
+<ProcessBoxBase@BoxLayout>:
+    process_name: ""
+    process_value: ""
+    size_hint_y: None
+    height: default_height
+
+    canvas.before:
+        Color:
+            rgba: .5, .5, .5, 0.3
+        Line:
+            width: 0.5
+            rectangle: self.x, self.y, self.width, self.height
+
+<ProcessBox@ProcessBoxBase>:
+    data: {}
+    is_boolean: False
+    ProcessLabel:
+        text: root.process_name
+        size_hint_x: 0.5
+
+    ProcessValueBox:
+        process_value: root.process_value
+        is_boolean: root.is_boolean
+        size_hint_x: 0.4
+
+    Filler:
+        size_hint_x: 0.1
+
+<PopupWidget@Popup>:
+    background: ""
+    auto_dismiss: False
+    title_color: hex_code(text_button_theme)
+    separator_color: hex_code(actionbar_theme)
+
+<AlertPopup@PopupWidget>:
+    title: ""
+    msg: ""
+    size_hint_y: 0.5
+    size_hint_x: 0.9
+    title_size: "20sp"
+    title_align: "center"
+
+    BoxLayout:
+        orientation: "vertical"
+
+        IotBaseLabel:
+            text: root.msg
+            halign: "left"
+            valign: "top"
+            padding_y: "20dp"
+
+        BoxLayout:
+            size_hint_y: None
+            height: default_height
+            id: buttons
+
+<FaultPop@PopupWidget>:
+    title: "Fault status"
+    fault_code: "-"
+    fault_name: "-"
+    fault_desc: "-"
+    size_hint_y: 0.5
+    size_hint_x: 0.9
+    title_size: "20sp"
+    title_align: "center"
+
+    BoxLayout:
+        orientation: "vertical"
+
+        IotBaseLabel:
+            text: "Fault Code: {}\n\nFault Name: {}\n\nDescription: {}".format(root.fault_code, root.fault_name, root.fault_desc)
+            halign: "left"
+
+        Filler:
+
+        BoxLayout:
+            size_hint_y: None
+            height: default_height
+
+            Filler:
+
+            CommandButton:
+                text: "OK"
+                font_size: "15sp"
+                on_press: root.dismiss()
+
+
+<FaultProcessBox@ButtonBehavior+ProcessBoxBase>:
+    fault_details: ("-", "-", "-")
+    process_value: self.fault_details[0]
+    is_boolean: False
+    on_press:
+        fault_pop = Factory.FaultPop(title=self.process_name)
+        fault_pop.fault_code = self.fault_details[0]
+        fault_pop.fault_name = self.fault_details[1]
+        fault_pop.fault_desc = self.fault_details[2]
+        fault_pop.open()
+
+    ProcessLabel:
+        text: root.process_name
+        size_hint_x: 0.5
+
+    ProcessValueBox:
+        process_value: root.process_value
+        is_boolean: root.is_boolean
+        size_hint_x: 0.4
+
+    ProcessLabel:
+        text: "\uf129"
+        font_name: "fa"
+        size_hint_x: 0.1
+
+
+<SubProcessBox@BoxLayout+Theme>:
+    process_name: ""
+    process_value: ""
+    is_boolean: False
+    size_hint_y: None
+    height: default_height
+    theme: title_theme
+
+    canvas.before:
+        Color:
+            rgba: .5, .5, .5, 0.3
+        Line:
+            width: 0.5
+            rectangle: self.x, self.y, self.width, self.height
+        Color:
+            rgba: 1, 1, 1, 0.2
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    Filler:
+        size_hint_x: 0.1
+
+    ProcessLabel:
+        text: root.process_name
+        size_hint_x: 0.4
+
+    ProcessValueBox:
+        process_value: root.process_value
+        is_boolean: root.is_boolean
+        size_hint_x: 0.4
+
+<TitleLabel@IotBaseLabel+Theme>:
+    size_hint_y: None
+    height: default_height
+    bold: True
+    color: hex_code(background_theme)
+
+<TitleBoxLayout@AnchorLayout>:
+    size_hint_y: None
+    height: default_height
+    anchor_x: "left"
+    is_home: False
+    title: ""
+    app_version: ""
+
+    TitleLabel:
+        text: root.title
+        halign: "center"
+
+    LabelButton:
+        text: "" if root.is_home else "[font=fa]\uf053[/font]"
+        reverse: True
+        name: "back_button"
+        text_size: self.size
+        halign: "center"
+        valign: "middle"
+        markup: True
+        font_size: "15sp"
+        size_hint_x: .1
+        disabled: root.is_home
+
+    IotBaseLabel:
+        text: "[b]v{}[/b]".format(root.app_version) if root.is_home else ""
+        color: hex_code(background_theme)
+        valign: "middle"
+        font_size: "15sp"
+        halign: "right"
+        valign: "middle"
+        padding_x: "20dp"
+
+<TopBoxLayout@BoxLayout>:
+    orientation: "vertical"
+
+<MachineEditBox@BoxLayout>:
+    title: ""
+    value: ""
+    hint_text: ""
+    read_only: False
+    input_filter: None
+    orientation: "vertical"
+    char_limit: 64
+
+    IotBaseLabel:
+        text: root.title
+        text_size: self.size
+        halign: "left"
+
+    LimitedCharTextInput:
+        text: root.value
+        on_text: root.value = self.text
+        char_limit: root.char_limit
+        foreground_color: 1, 1, 1, 1
+        background_color: 0, 0, 0, 0
+        disabled: root.read_only
+        input_filter: root.input_filter
+        hint_text: root.hint_text
+        multiline: False
+        write_tab: False
+        default_padding: 10
+        padding_y: self.height - (self.font_size + self.default_padding), 0
+
+        canvas.before:
+            Color:
+                rgba: hex_code(text_button_theme)
+            Line:
+                points: self.x, self.y, self.x + self.width, self.y
+                width: 1
+
+<ProcessSplitBase@BoxLayout>:
+    data: {}
+    orientation: "vertical"
+    size_hint_y: None
+    nchild: len(self.children)
+    height: self.nchild * default_height
+
+    canvas.before:
+        Color:
+            rgba: .5, .5, .5, 0.3
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+
+<ProcessSplitCutting@ProcessSplitBase>:
+    on_data:
+        pid.process_value = self.data.get("pid", "-")
+        ptr.process_value = self.data.get("ptr", "-")
+        av.process_value = self.data.get("av", "-")
+        app.process_value = self.data.get("app", "-")
+        asgp.process_value = self.data.get("asgp", "-")
+        ashf.process_value = self.data.get("ashf", "-")
+        cmip.process_value = self.data.get("cmip", "-")
+        pg.process_value = self.data.get("pg", "-")
+        sf.process_value = self.data.get("sf", "-")
+        cur.process_value = self.data.get("cur", "-")
+        kw.process_value = self.data.get("kw", "-")
+        pip.process_value = self.data.get("pip", "-")
+        sip.process_value = self.data.get("sip", "-")
+        sihp.process_value = self.data.get("sihp", "-")
+
+    TitleLabel:
+        text: "Cutting"
+        theme: title_theme
+        color: hex_code(text_button_theme)
+
+    ProcessBox:
+        id: pid
+        process_name: "Process ID"
+
+    ProcessBox:
+        id: cur
+        process_name: "Demand Current"
+
+    ProcessBox:
+        id: pg
+        process_name: "Plasma Gas"
+
+    ProcessBox:
+        id: sf
+        process_name: "Shield Fluid / Gas"
+
+    ProcessBox:
+        id: av
+        process_name: "Arc Voltage"
+
+    ProcessBox:
+        id: kw
+        process_name: "kW Output"
+
+    ProcessBox:
+        id: ptr
+        process_name: "Purge Time Remaining"
+
+    ProcessBox:
+        id: app
+        process_name: "Actual Plasma Pressure"
+
+    ProcessBox:
+        id: asgp
+        process_name: "Actual Shield Gas Pressure"
+
+    ProcessBox:
+        id: ashf
+        process_name: "Actual Shield H2O Flow"
+
+    ProcessBox:
+        id: cmip
+        process_name: "Cut or Mark Inlet Pressure"
+
+    ProcessBox:
+        id: pip
+        process_name: "Pilot Inlet Pressure"
+
+    ProcessBox:
+        id: sip
+        process_name: "Shield Inlet Gas Pressure"
+
+    ProcessBox:
+        id: sihp
+        process_name: "Shield Inlet H2O Pressure"
+
+
+<ProcessSplitServiceBtn@ServiceBtn>
+    size_hint_y: None
+    height: default_height
+    name: ""
+    text : ""
+    color: 0,0,0,1
+    background_color:  1, 1, 1, 0
+    event_data: None
+
+    on_press:
+        app.send_event(self.name + "_pressed", self.event_data)
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 1
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+
+    ProcessLabel:
+        text: root.text
+        size_hint_x: 0.5
+
+    ProcessValueBox:
+        process_value: "[font=fa]\uf105[/font]"
+        is_boolean: False
+        size_hint_x: 0.08
+
+
+<ProcessSplitService@ProcessSplitBase>:
+    remove_pop: Factory.ValveCheckPopup(title="Authentication for valve check")
+    cutchart_revision: ""
+
+    on_data:
+        ds.process_value = self.data.get("ds", "-")
+        dccm.process_value = self.data.get("dccm", "-")
+        fccm.fault_details = self.data.get("fccm", ("-", "-", "-"))
+        ddmc.process_value = self.data.get("ddmc", "-")
+        fdmc.fault_details = self.data.get("fdmc", ("-", "-", "-"))
+        ddpc.process_value = self.data.get("ddpc", "-")
+        fdpc.fault_details = self.data.get("fdpc", ("-", "-", "-"))
+        pf.process_value = self.data.get("pf", "-")
+        sgf.process_value = self.data.get("sgf", "-")
+        ah.process_value = self.data.get("ah", "-")
+        dss.data = self.data.get("dss", {})
+        fr_ccm.process_value = self.data.get("fr_ccm", "-")
+        fr_dmc.process_value = self.data.get("fr_dmc", "-")
+        fr_dpc.process_value = self.data.get("fr_dpc", "-")
+        ecc.process_value = self.data.get("ecc", "-")
+        hl.process_value = self.data.get("hl", "-")
+        pm.process_value = self.data.get("pm", "-")
+        ps.process_value = self.data.get("ps", "-")
+        pe.process_value = self.data.get("pe", "-")
+        pref.process_value = self.data.get("pref", "-")
+        po.process_value = self.data.get("po", "-")
+        otm.process_value = self.data.get("otm", "-")
+        mms.process_value = self.data.get("mms", "-")
+        vs.data = self.data.get("vs", {})
+
+    TitleLabel:
+        text: "Service"
+        theme: title_theme
+        color: hex_code(text_button_theme)
+
+    ProcessBox:
+        id: ds
+        process_name: "Device Status"
+
+    ProcessBox:
+        id: dccm
+        process_name: "Device State CCM"
+
+    FaultProcessBox:
+        id: fccm
+        fault_details: root.data.get("fccm", ("-", "-", "-"))
+        process_name: "Fault Status CCM"
+
+    ProcessBox:
+        id: ddmc
+        process_name: "Device State DMC"
+
+    FaultProcessBox:
+        id: fdmc
+        fault_details: root.data.get("fdmc", ("-", "-", "-"))
+        process_name: "Fault Status DMC"
+
+    ProcessBox:
+        id: ddpc
+        process_name: "Device State DPC"
+
+    FaultProcessBox:
+        id: fdpc
+        fault_details: root.data.get("fdpc", ("-", "-", "-"))
+        process_name: "Fault Status DPC"
+
+    ProcessBox:
+        id: pf
+        process_name: "Nominal Plasma Flow"
+
+    ProcessBox:
+        id: sgf
+        process_name: "Nominal Shield Gas Flow"
+
+    ProcessBox:
+        id: ah
+        process_name: "Arc Hours"
+
+    ProcessBox:
+        process_name: "DIP Switch Settings"
+        id: dss
+        data: root.data.get("dss", {})
+        on_data:
+            dss_pft.process_value = dss.data.get("pft", "-")
+            dss_pf.process_value = dss.data.get("pf", "-")
+            dss_apf.process_value = dss.data.get("apf", "-")
+            dss_apt.process_value = dss.data.get("apt", "-")
+            dss_pt.process_value = dss.data.get("pt", "-")
+            dss_radc.process_value = dss.data.get("radc", "-")
+            dss_tr.process_value = dss.data.get("tr", "-")
+            dss_rcmmc.process_value = dss.data.get("rcmmc", "-")
+
+    SubProcessBox:
+        id: dss_pft
+        process_name: "Preflow Time"
+
+    SubProcessBox:
+        id: dss_pf
+        process_name: "Post Flow"
+
+    SubProcessBox:
+        id: dss_apf
+        process_name: "Auto Pilot Function"
+
+    SubProcessBox:
+        id: dss_apt
+        process_name: "Auto Pilot Delay"
+
+    SubProcessBox:
+        id: dss_pt
+        process_name: "Pilot Time"
+
+    SubProcessBox:
+        id: dss_radc
+        process_name: "Remote Analog Demand Control"
+
+    SubProcessBox:
+        id: dss_tr
+        process_name: "Transfer Retry"
+
+    SubProcessBox:
+        id: dss_rcmmc
+        process_name: "Remote cut/mark mode control"
+
+    ProcessBox:
+        id: cr
+        process_value: root.cutchart_revision
+        process_name: "Cutchart Revision"
+
+    ProcessBox:
+        id: fr_ccm
+        process_name: "Firmware Revision CCM"
+
+    ProcessBox:
+        id: fr_dmc
+        process_name: "Firmware Revision DMC"
+
+    ProcessBox:
+        id: fr_dpc
+        process_name: "Firmware Revision DPC"
+
+    ProcessBox:
+        id: hl
+        process_name: "Hose Length"
+
+    ProcessBox:
+        id: pm
+        process_name: "Parallel Mode"
+
+    ProcessBox:
+        id: ecc
+        process_name: "Emergency Chain Closed"
+        is_boolean: True
+
+    ProcessBox:
+        id: pe
+        process_name: "Plasma Enable"
+        is_boolean: True
+
+    ProcessBox:
+        id: mms
+        process_name: "Mark Mode Select"
+        is_boolean: True
+
+    ProcessBox:
+        id: pref
+        process_name: "Preflow"
+        is_boolean: True
+
+    ProcessBox:
+        id: po
+        process_name: "Pilot On"
+        is_boolean: True
+
+    ProcessBox:
+        id: ps
+        process_name: "Plasma Start"
+        is_boolean: True
+
+    ProcessBox:
+        id: otm
+        process_name: "Ok To Move"
+        is_boolean: True
+
+    ProcessBox:
+        id: vs
+        process_name: "[b]Valve State[/b]"
+        data: root.data.get("vs", {})
+        on_data:
+            vs_phe.process_value = str(vs.data.get("phe", "-"))
+            vs_ple.process_value = str(vs.data.get("ple", "-"))
+            vs_pe.process_value = str(vs.data.get("pe", "-"))
+            vs_sge.process_value = str(vs.data.get("sge", "-"))
+            vs_she.process_value = str(vs.data.get("she", "-"))
+            vs_ve.process_value = str(vs.data.get("ve", "-"))
+            vs_cse.process_value = str(vs.data.get("cse", "-"))
+            vs_mse.process_value = str(vs.data.get("mse", "-"))
+
+    SubProcessBox:
+        id: vs_phe
+        process_name: "Plasma High Enabled"
+        is_boolean: True
+
+    SubProcessBox:
+        id: vs_ple
+        process_name: "Plasma Low Enabled"
+        is_boolean: True
+
+    SubProcessBox:
+        id: vs_pe
+        process_name: "Pilot (Pre-Flow) Enabled"
+        is_boolean: True
+
+    SubProcessBox:
+        id: vs_sge
+        process_name: "Shield Gas Enabled"
+        is_boolean: True
+
+    SubProcessBox:
+        id: vs_she
+        process_name: "Shield H20 Enabled"
+        is_boolean: True
+
+    SubProcessBox:
+        id: vs_ve
+        process_name: "Venting Enabled"
+        is_boolean: True
+
+    SubProcessBox:
+        id: vs_cse
+        process_name: "Cutting Solenoid Enabled"
+        is_boolean: True
+
+    SubProcessBox:
+        id: vs_mse
+        process_name: "Marking Solenoid Enabled"
+        is_boolean: True
+
+<VarHeightBoxLayout@BoxLayout>:
+    orientation: "vertical"
+    size_hint_y: None
+    nchild: len(self.children)
+    height: self.nchild * default_height
+
+<MaintenanceLinkMenu@BoxLayout>:
+    orientation: "vertical"
+    size_hint_y: None
+    # The length of the boxlayout is calculated based on the
+    # children widget height
+    height: (len(self.children) * (default_height * 1.5 + self.spacing)) - self.spacing
+    spacing: "25sp"
+
+<MachineListItem>:
+    # Hose length value was in meters
+    machine_name: "Suprarex HDX - 1"
+    ip: "127.0.0.1"
+    port: "9000"
+    hose_length: "23 m"
+    torch_style: "21"
+    name: "machine_edit_button"
+
+    on_press:
+        app.send_event(self.name + "_pressed",
+        {"name": self.machine_name, "ip": self.ip, "port": self.port, "hose_length": self.hose_length, "torch_style": self.torch_style, "is_add": False, "scan": False})
+
+    size_hint_y: None
+    height: default_height
+
+    IotBaseLabel:
+        text: root.machine_name
+        halign: "left"
+    IotBaseLabel:
+        text: root.ip
+        halign: "left"
+    IotBaseLabel:
+        text: root.port
+        halign: "center"
+        size_hint_x: 0.3
+
+<AccessPointBox>:
+    ssid: ""
+    bssid: ""
+    rssi: -70
+    encrypt_type: "WPA2"
+    current: 0
+    spacing: 5
+    on_press:
+        rssi = "Poor" if self.rssi < -80 else ("Good" if self.rssi <= -70 else "Excellent")
+        hidden = "Yes" if self.hidden else "No"
+        data = {"bssid": self.bssid, "ssid": self.ssid, "encrypt_type": self.encrypt_type, "rssi": rssi, "hidden": hidden}
+        app.send_event("ap_item_pressed", data)
+
+    IotBaseLabel:
+        text: root.ssid
+        halign: "left"
+
+    IotBaseLabel:
+        text: "\uf00c" if root.current else ""
+        font_name: "fa"
+        halign: "center"
+        size_hint_x: 0.2
+
+    IotBaseLabel:
+        # FIXME: WiFi range depends on ap_auth.rssi
+        text: "\uf1eb"
+        font_name: "fa"
+        halign: "center"
+        size_hint_x: 0.2
+
+    IotBaseLabel:
+        text: "\uf023" if root.encrypt_type.upper() != "OPEN" else "\uf3c1"
+        font_name: "fa"
+        halign: "center"
+        size_hint_x: 0.2
+
+<MachineScanAddButton>:
+    Filler:
+        size_hint_x: 0.6
+
+    LabelButton:
+        text: "Scan Plasma System"
+        on_press: app.send_event("machine_edit_button_pressed", {"ip": "", "name": "", "port": "", "hose_length": "", "is_add": True, "scan": True})
+
+    Filler:
+        size_hint_x: 0.6
+
+
+<MachineAddButton>:
+    AnchorLayout:
+        anchor_x: "center"
+
+        LabelButton:
+            text: " + Add Plasma System "
+            name: "add_machine_button"
+            size_hint_x: None
+            width: self.texture_size[0]
+
+
+<ConnectionStatusBar@BoxLayout>:
+    status: 0
+    machines: []
+    curr_machine: ""
+    color: "ff4040" if self.status == 2 else ("ffff00" if self.status == 1 else "43b02a")
+    status_text: "Bad" if self.status == 2 else ("Faulty" if self.status == 1 else "Good")
+    orientation: "horizontal"
+    height: default_height
+    size_hint_y: None
+
+    ConnectionStatus:
+        text: "Connection: {}  [color={}][font=fa]\uF111[/font][/color]".format(root.status_text, root.color)
+        halign: "center"
+        height: default_height
+        size_hint_y: None
+
+    Spinner:
+        values: root.machines
+        text: self.values[0] if len(self.values) == 1 else root.curr_machine if root.curr_machine in root.machines else "Select Plasma System"
+        background_normal: ""
+        text_size: self.width, None
+        background_color: hex_code(actionbar_theme)
+        size_hint_x: 0.6
+        top: self.width
+        halign: "center"
+        option_cls: Factory.get("SpinnerOptionWidget")
+        on_text:
+            text = "" if self.text == "Select Plasma System" else self.text
+            app.send_event("machine_selected", value=text)
+
+<ImageButton@ButtonBehavior+Image>:
+
+<IotNodeImage@BoxLayout+Theme>:
+    iotnode_url: "https://www.thermal-dynamics.com/"
+    theme: actionbar_theme
+    size_hint_y: None
+    height: default_height * 1.5
+    ImageButton:
+        source: "images/iotnode.png"
+        allow_stretch: True
+        keep_ratio: True
+        on_press: root.open_link(root.iotnode_url)
+
+<MaintenanceLayout>:
+    canvas.before:
+        Color:
+            rgba: .5, .5, .5, 0.3
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+
+
+
+<MaintenanceScreen@Screen>:
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Maintenance"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: (maintenance_link_menu.height) + schedule.height + self.spacing
+                    spacing: "25sp"
+                    MenuButton:
+                        id: schedule
+                        height: default_height * 1.5
+                        text: "Maintenance Schedule"
+                        name: "maintenance_schedule_button"
+                    MaintenanceLinkMenu:
+                        id: maintenance_link_menu
+
+
+
+<CutQualityTipsScreen@Screen>:
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Cut Quality Tips"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    # The length of the boxlayout is calculated based on the
+                    # children widget height
+                    height: (len(self.children) * (default_height * 1.5 + self.spacing)) - self.spacing
+                    spacing: "25sp"
+
+                    MenuButton:
+                        text: "Improve Dross "
+                        name: "improve_dross_button"
+
+                    MenuButton:
+                        text: "Improve Cut Angularity"
+                        name: "improve_cut_angularity_button"
+
+                    LinkButton:
+                        text: "Improve Holes"
+                        name: "improve_holes_button"
+                        link: "https://youtu.be/pBW8CzYtumQ?t=17"
+
+                    LinkButton:
+                        text: "Improve Bevel Cut"
+                        name: "improve_bevel_cut_button"
+                        link: "https://youtu.be/N03fHvPdesA?list=PLADdPIXXdbvNOzXsEcV0o4wjSyqndieNv&t=30"
+
+                    LinkButton:
+                        text: "Improve Piercing"
+                        name: "improve_piercing_button"
+                        link: "https://youtu.be/zNuecfFQmhA"
+
+                    LinkButton:
+                        text: "Improve Cut With Water"
+                        name: "improve_cut_with_water_button"
+                        link: "https://youtu.be/LRQ2HjlzgyI"
+
+                    LinkButton:
+                        text: "Improve Cut Underwater"
+                        name: "improve_cut_underwater_button"
+                        link: "https://youtu.be/pBW8CzYtumQ?t=17"
+
+                    LinkButton:
+                        text: "Cut Scrap"
+                        name: "cut_scrap_underwater_button"
+                        link: "https://esab.sharepoint.com/:v:/s/ThermalDynamicsEurope/EfbEPaJsq_VJnncSVOSUWGIBeXXm1QTmvYB0PZ6RK3dkfw?e=1oOikM"
+
+<MaintenanceScheduleScreen>:
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Maintenance Notifications"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [0, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                VarHeightBoxLayout:
+                    id: list_view
+                    IotBaseLabel:
+                        text: "No maintenace notification available"
+
+        MenuButton:
+            text: "Mark as serviced"
+            name: "mark_as_serviced_button"
+            on_press: self.event_data =  root.get_marked_notifications()
+
+<ErrorsScreen>:
+    error_code: "Select Error Code"
+
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Error Codes"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    # The length of the boxlayout is calculated based on the
+                    # children widget height
+                    height: (len(self.children) * (default_height * 1.5 + self.spacing)) - self.spacing
+                    spacing: "25sp"
+
+                    BoxLayout:
+                        orientation: "vertical"
+
+                        IotParamLabel:
+                            text: "Error Code"
+
+                        AutoSelectSpinner:
+                            id: material
+                            text: root.error_code
+                            values: root.fault_codes
+                            on_text: root.error_code = self.text
+                            default_padding: 10
+                    Filler:
+
+                    BoxLayout:
+                        size_hint_y: None
+                        padding: [20, 0]
+                        height: default_height
+
+                        Filler:
+
+                        CommandButton:
+                            text: "Submit"
+                            font_size: "15sp"
+                            name: "error_submit_button"
+                            size_hint_y: None
+                            height: default_height
+                            on_press: self.event_data = root.error_code
+                            halign: "center"
+                            disabled: True if root.error_code == "Select Error Code" else False
+
+                    Filler:
+
+
+<ErrorInformationScreen>:
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Error Information"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [15, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    # The length of the boxlayout is calculated based on the
+                    # children widget height
+                    height: 2 * (ec_box.height + self.spacing) + remedy_box.height + 2 * (1.5 * default_height + self.spacing)
+                    spacing: sp(15)
+
+                    BoxLayout:
+                        id: ec_box
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: ec_label.height
+
+                        IotErrorLabel:
+                            id: ec_label
+                            text: "[b]Error Code :[/b]"
+
+                        IotErrorLabel:
+                            text: root.code
+
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: ei_label.height
+
+                        IotErrorLabel:
+                            id: ei_label
+                            text: "[b]Error Information :[/b]"
+
+                        IotErrorLabel:
+                            text: root.information
+
+                    BoxLayout:
+                        id: remedy_box
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: remedy_label.height + remedy_field.height
+
+                        IotErrorLabel:
+                            id: remedy_label
+                            text: "[b]Remedy :[/b]"
+
+                        IotBaseLabel:
+                            id: remedy_field
+                            text: root.remedy
+                            text_size: self.width, self.height
+                            valign: "top"
+                            halign: "justify"
+                            height: dp(200)
+                            size_hint_y: None
+                            padding: [10, 10]
+
+                    LinkButton:
+                        text: "Document Link"
+                        name: "error_document_button"
+                        link: root.document_link
+                        disabled: not (self.link and self.link != "-?-")
+
+                    LinkButton:
+                        text: "Video Link"
+                        name: "error_video_button"
+                        link: root.video_link
+                        disabled: not (self.link and self.link != "-")
+
+<HomeScreen@Screen>:
+    color: "ff4040" if self.status == 2 else ("ffff00" if self.status == 1 else "43b02a")
+    app_version: ""
+    service_text: "Service"
+
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Thermal Dynamics UC\n Systems Overview"
+            is_home: True
+            app_version: root.app_version
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    # The length of the boxlayout is calculated based on the
+                    # children widget height
+                    height: (len(self.children) * (default_height * 1.5 + self.spacing)) - self.spacing
+                    spacing: "25sp"
+
+                    MenuButton:
+                        text: "Process Setup"
+                        font_size: "20sp"
+                        name: "process_setup_button"
+
+                    MenuButton:
+                        text: "Cutting"
+                        name: "cutting_button"
+                        font_size: "20sp"
+
+                    ServiceStatusBtn:
+                        name: "service_menu_button"
+                        font_size: "20sp"
+                        btn_text: root.service_text
+                        fault_code: root.fault_code
+
+                    MenuButton:
+                        text: "Configuration"
+                        font_size: "20sp"
+                        name: "settings_button"
+
+            ConnectionStatusBar:
+                status: root.status
+                machines: root.machines
+                curr_machine: root.curr_machine
+
+
+<ServiceMenu@Screen>:
+    status: 0
+    machines: []
+    curr_machine: ""
+    data: {}
+    error_text: "Error Codes"
+    fault_code: ""
+
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Service Menu"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    # The length of the boxlayout is calculated based on the
+                    # children widget height
+                    height: (len(self.children) * (default_height * 1.5 + self.spacing)) - self.spacing
+                    spacing: "25sp"
+
+                    MenuButton:
+                        text: "Service"
+                        name: "service_button"
+                        font_size: "20sp"
+
+                    ServiceStatusBtn:
+                        name: "errors_button"
+                        font_size: "20sp"
+                        btn_text: root.error_text
+                        fault_code: root.fault_code
+
+                    MenuButton:
+                        text: "Maintenance/Tips"
+                        font_size: "20sp"
+                        name: "maintenance_button"
+
+                    MenuButton:
+                        text: "Cutting Improvement"
+                        name: "cut_quality_tips_button"
+                        font_size: "20sp"
+
+
+            ConnectionStatusBar:
+                status: root.status
+                machines: root.machines
+                curr_machine: root.curr_machine
+
+<MachineAdd@Screen>:
+
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Add Plasma System"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                # The length of the boxlayout is calculated based on the
+                # children widget height
+                height: (len(self.children) * (default_height * 1.5 + self.spacing)) - self.spacing
+                spacing: "25sp"
+
+                MenuButton:
+                    text: "Guided Mode"
+                    name: "wizard_config_button"
+                    font_size: "20sp"
+
+                MenuButton:
+                    text: "Manual Mode"
+                    on_press: on_press: app.send_event("machine_edit_button_pressed", {"ip": "", "name": "", "port": "", "hose_length": "", "torch_style": "", "is_add": True, "scan": False})
+                    font_size: "20sp"
+
+            Filler:
+
+<CuttingScreen@Screen>:
+    status: 0
+    machines: []
+    curr_machine: ""
+    data: {}
+
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Cutting"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            SmoothScrollView:
+                ProcessSplitCutting:
+                    data: root.data
+
+            ConnectionStatusBar:
+                status: root.status
+                machines: root.machines
+                curr_machine: root.curr_machine
+
+<ServiceScreen@Screen>:
+    status: 0
+    machines: []
+    curr_machine: ""
+    data: {}
+    cutchart_revision: ""
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Service"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            SmoothScrollView:
+                ProcessSplitService:
+                    data: root.data
+                    cutchart_revision: root.cutchart_revision
+            ConnectionStatusBar:
+                status: root.status
+                machines: root.machines
+                curr_machine: root.curr_machine
+
+#
+# Since we have scroll view within a carousel, the defaults seems to be sluggish.
+# Disabling horizontal scrolling and tuning the scroll_distance
+# seems to fix issue.
+#
+# There are clickable elements within the scrollview that will trigger a popup.
+# This is for displaying more information for fault status fields. To prevent
+# popup from getting accidentally triggered we are increasing the scroll timeout.
+#
+<SmoothScrollView@ScrollView>:
+    scroll_timeout: 100
+    scroll_distance: sp(1)
+    do_scroll_x: False
+
+<PageDots@IotBaseLabel>:
+    pageid: 0
+    current_pageid: 0
+    color: actionbar_theme if self.pageid == self.current_pageid else title_theme
+    text: "\uF111"
+    font_name: "fa"
+    font_size: "10sp"
+
+<PageIndicatorBox@BoxLayout>:
+    current_pageid: 0
+    orientation: "horizontal"
+
+    Filler:
+
+    PageDots:
+        pageid: 0
+        current_pageid: root.current_pageid
+        size_hint_x: 0.15
+
+    PageDots:
+        pageid: 1
+        current_pageid: root.current_pageid
+        size_hint_x: 0.15
+
+    PageDots:
+        pageid: 2
+        current_pageid: root.current_pageid
+        size_hint_x: 0.15
+
+    Filler:
+
+
+<SettingsScreen@Screen>:
+    poll_period: ""
+    unit_types: []
+    current_unit_type: ""
+
+    TopBoxLayout:
+        spacing: "25sp"
+
+        TitleBoxLayout:
+            title: "Configuration"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            MenuButton:
+                text: "Plasma System Configuration"
+                name: "machine_config_button"
+
+            MenuButton:
+                text: "Node AP Configuration"
+                name: "node_ap_config_button"
+
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: default_height * 1.5
+
+                Filler:
+                    size_hint_max_x: sp(10)
+
+                IotBaseLabel:
+                    text: "Unit of Measure:"
+                    text_size: self.size
+                    halign: "left"
+                    size_hint_y: None
+                    height: default_height * 1.5
+                    size_hint_x: 0.25
+
+                Filler:
+                    size_hint_max_x: sp(10)
+                    size_hint_x: 0.05
+
+                MenuRadioBoxLabel:
+                    group: "unit_type"
+                    text: root.unit_types[0][0] if root.unit_types else ""
+                    halign: "left"
+                    size_hint_max_x: sp(100)
+                    active: True if root.current_unit_type and (self.text == root.current_unit_type) else False
+                    on_active: app.send_event("unit_type_selected", dict(root.unit_types)[self.text]) if self.active else ""
+
+                MenuRadioBoxLabel:
+                    group: "unit_type"
+                    text: root.unit_types[1][0] if root.unit_types else ""
+                    halign: "left"
+                    size_hint_max_x: sp(100)
+                    active: True if root.current_unit_type and (self.text == root.current_unit_type) else False
+                    on_active: app.send_event("unit_type_selected", dict(root.unit_types)[self.text]) if self.active else ""
+
+
+            IotNodeImage:
+
+            Filler:
+
+
+<MachineScanScreen>:
+    screen_msg: ""
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Discovered Machines"
+
+        TitleLabel:
+            text: root.screen_msg
+            halign: "left"
+            height: default_height
+            size_hint_y: None
+            theme: title_theme
+            color: hex_code(text_button_theme)
+            padding: [20, 0]
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+
+            BoxLayout:
+                height: default_height
+                size_hint_y: None
+                IotBaseLabel:
+                    text: "Plasma System Name"
+                    halign: "left"
+                    bold: True
+                IotBaseLabel:
+                    text: "Hostname"
+                    halign: "left"
+                    bold: True
+                IotBaseLabel:
+                    text: "Port"
+                    halign: "center"
+                    bold: True
+                    size_hint_x: 0.3
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: len(self.children) * default_height
+                    id: list_view
+
+
+<MachinesListScreen>:
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Plasma Systems"
+
+        TitleLabel:
+            text: "Click a plasma system or add plasma system button to configure."
+            halign: "left"
+            height: default_height
+            size_hint_y: None
+            theme: title_theme
+            color: hex_code(text_button_theme)
+            padding: [20, 0]
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+
+            BoxLayout:
+                height: default_height
+                size_hint_y: None
+                IotBaseLabel:
+                    text: "Plasma System Name"
+                    halign: "left"
+                    bold: True
+                IotBaseLabel:
+                    text: "Hostname"
+                    halign: "left"
+                    bold: True
+                IotBaseLabel:
+                    text: "Port"
+                    halign: "center"
+                    bold: True
+                    size_hint_x: 0.3
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: len(self.children) * default_height
+                    id: list_view
+
+                    MachineAddButton:
+
+                    Filler:
+
+<MachineEditScreen@Screen>:
+    machine_name: ""
+    ip: ""
+    port: ""
+    hose_length: ""
+    torch_style: ""
+    is_add: True
+    is_metric: root.is_metric
+    hose_value: []
+    hose_len_imp2met: {}
+    torch_values: self.torch_data()
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Plasma System Config"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: default_height * 7
+
+                MachineEditBox:
+                    title: "Name"
+                    value: root.machine_name
+                    on_value: root.machine_name = self.value
+                    read_only: not root.is_add
+
+                MachineEditBox:
+                    title: "IP"
+                    value: root.ip
+                    on_value: root.ip = self.value
+
+                MachineEditBox:
+                    title: "Port"
+                    value: root.port
+                    on_value: root.port = self.value
+                    input_filter: "int"
+
+                BoxLayout:
+                    orientation: "vertical"
+
+                    IotParamLabel:
+                        text: "Hose Length"
+
+                    AutoSelectSpinner:
+                        id: hose_length
+                        name: "Select Hose Length"
+                        text: root.hose_length if root.hose_length else self.name
+                        values: root.hose_value
+                        on_text:
+                            root.hose_length = self.text if self.text != self.name else ""
+                        default_padding: 10
+
+                BoxLayout:
+                    orientation: "vertical"
+
+                    IotParamLabel:
+                        text: "Torch Style"
+
+                    AutoSelectSpinner:
+                        id: torch_style
+                        text: root.torch_style if root.torch_style else "Select Torch Style"
+                        values: root.torch_values
+                        on_text: root.torch_style = self.text
+                        default_padding: 10
+
+            Filler:
+
+            BoxLayout:
+                disabled: True if root.is_add else False
+                opacity: 0 if root.is_add else 1
+
+                AnchorLayout:
+                    anchor_x: "center"
+
+                    LabelButton:
+                        size_hint: None, None
+                        height: default_height
+                        width: self.texture_size[0]
+                        text: "" if root.is_add else " Remove Plasma System "
+                        name: "remove_machine_button"
+                        on_press:
+                            remove_pop = Factory.MachineRemovePopup(title="Confirm")
+                            remove_pop.machine_name = root.machine_name
+                            remove_pop.open()
+
+            Filler:
+
+            BoxLayout:
+                size_hint_y: None
+                height: default_height
+
+                Filler:
+
+                CommandButton:
+                    text: "Add" if root.is_add else "Save"
+                    reverse: True
+                    font_size: "15sp"
+                    name: "ok_button"
+                    on_press:
+                        root.hose_length = (root.hose_length if root.is_metric else root.hose_len_imp2met[root.hose_length]) if root.hose_length  else ""
+                        self.event_data = {"name": root.machine_name,"ip": root.ip,"port": root.port,"hose_length": root.hose_length,"torch_style": root.torch_style}
+
+<MachineRemovePopup@PopupWidget>:
+    title: ""
+    machine_name: ""
+    size_hint_y: 0.5
+    size_hint_x: 0.9
+    title_size: "20sp"
+    title_align: "center"
+
+    BoxLayout:
+        orientation: "vertical"
+        IotBaseLabel:
+            text: "Do you want to remove {}?".format(root.machine_name)
+            halign: "center"
+
+        Filler:
+
+        BoxLayout:
+            size_hint_y: None
+            height: default_height
+
+            CommandButton:
+                name: "cancel_button"
+                reverse: True
+                text: "Cancel"
+                font_size: "15sp"
+                on_press: root.dismiss()
+
+            Filler:
+
+            CommandButton:
+                name: "ok_button"
+                reverse: True
+                text: "Ok"
+                font_size: "15sp"
+                on_press: root.dismiss()
+
+
+<ValveCheckPopup>:
+    title: ""
+    size_hint_y: 0.45
+    size_hint_x: 0.9
+    title_size: "20sp"
+    title_align: "center"
+
+    on_open:
+        password.input_text = ""
+        password.active = True
+
+    BoxLayout:
+        orientation: "vertical"
+
+        PasswordInputBox:
+            id: password
+            title_text: "Password"
+
+        IotBaseLabel:
+            text: root.incorrect_message
+            size_hint_y: None
+            height: default_height
+            color: 1, 0, 0, 1
+            halign: "left"
+
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: default_height
+
+            CommandButton:
+                name: "cancel_button"
+                reverse: True
+                text: "Cancel"
+                font_size: "15sp"
+                on_press: root.dismiss()
+
+            Filler:
+
+            CommandButton:
+                name: "confirm_button"
+                text: "Confirm"
+                font_size: "15sp"
+                on_press:
+                    result = root.authenticate()
+                    root.dismiss() if result else ""
+                    self.event_data = {"success": result}
+
+
+<ApConnectScreen@Screen>:
+    iot_node_name: ""
+    success_text: "Once connected press next."
+    prompt_text: ""
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Guided Mode"
+
+        BoxLayout:
+            orientation: "vertical"
+
+            Filler:
+                size_hint_y: None
+                height: "25sp"
+
+            BoxLayout:
+                size_hint_y: None
+                padding: [20, 0]
+                height: default_height
+
+                CommandButton:
+                    text: "Cancel"
+                    reverse: True
+                    name: "back_button"
+                    font_size: "15sp"
+
+                Filler:
+
+                CommandButton:
+                    text: "Next"
+                    name: "next_button"
+                    size_hint_y: None
+                    height: default_height
+                    font_size: "15sp"
+                    pos_hint: {"bottom": 0.95, "right": 0.95}
+                    on_press:
+                        self.event_data = root.iot_node_name
+
+            Filler:
+                size_hint_y: None
+                width: 0.1 * self.parent.width
+
+            BoxLayout:
+                orientation: "vertical"
+
+                IotScreenLabel:
+                    id: connection
+                    text: root.prompt_text
+
+                IotScreenLabel:
+                    text: root.success_text
+
+
+            Filler:
+
+            Filler:
+
+
+<ConnectionApScreen@Screen>:
+    data: "Connecting to Plasma System..."
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Connecting ..."
+
+        BoxLayout:
+            orientation: "vertical"
+
+            BoxLayout:
+                IotScreenLabel:
+                    text: root.data
+                    valign: 'top'
+            Filler:
+
+
+<SerialNumInputScreen@Screen>:
+    serial_num: ""
+
+    on_enter:
+        input_text.text = ""
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Guided Mode"
+
+        BoxLayout:
+            orientation: "vertical"
+
+            Filler:
+                size_hint_y: None
+                height: "25sp"
+
+            BoxLayout:
+                size_hint_y: None
+                padding: [20, 0]
+                height: default_height
+
+                CommandButton:
+                    text: "Cancel"
+                    reverse: True
+                    name: "back_button"
+                    font_size: "15sp"
+
+                Filler:
+
+                CommandButton:
+                    id: next
+                    text: "Next"
+                    name: "next_button"
+                    disabled: True
+                    size_hint_y: None
+                    height: default_height
+                    font_size: "15sp"
+                    pos_hint: {"right": 0.95, "bottom": 0.95}
+                    on_press:
+                        self.event_data = root.serial_num
+            Filler:
+                size_hint_x: None
+                width: 0.1 * self.parent.width
+
+            IotScreenLabel:
+                text: "Enter serial number of Plasma Power Source as seen on the device label"
+                padding: [15,10]
+                halign: "center"
+
+            BoxLayout:
+                orientation: "horizontal"
+
+                Filler:
+                    size_hint_x: None
+                    width: 0.1 * self.parent.width
+
+                LimitedCharTextInput:
+                    id: input_text
+                    text: root.serial_num
+                    foreground_color: 1, 1, 1, 0
+                    background_color: 0, 0, 0, 0
+                    multiline: False
+                    write_tab: False
+                    focus: False
+                    size_hint: None, None
+                    halign: "center"
+                    filter_regex: "\w"
+                    size: 0.8 * self.parent.width, default_height
+                    char_limit: 20
+
+                    on_text:
+                        root.serial_num = self.text
+                        next.disabled = False if len(self.text) >= 5 else True
+
+                    canvas.before:
+                        Color:
+                            rgba: hex_code(text_button_theme)
+                        Line:
+                            points: self.x, self.y, self.x + self.width, self.y
+                            width: 1
+
+                Filler:
+                    size_hint_x: None
+                    width: 0.1 * self.parent.width
+
+            Filler:
+
+            Filler:
+
+            Filler:
+
+
+<PollPeriodPopup@PopupWidget>:
+    title: "Poll Period"
+    size_hint_y: 0.4
+    size_hint_x: 0.8
+    title_size: "20sp"
+    title_align: "center"
+    value: ""
+
+    BoxLayout:
+        orientation: "vertical"
+
+        BoxLayout:
+            size_hint_y: None
+            height: default_height
+            orientation: "vertical"
+
+            LimitedCharTextInput:
+                text: root.value
+                on_text: root.value = self.text
+                foreground_color: 1, 1, 1, 0
+                background_color: 0, 0, 0, 0
+                multiline: False
+                write_tab: False
+                input_filter: "int"
+                default_padding: 10
+                size_hint_y: 0.5
+                hint_text: "Enter poll period in milliseconds"
+                padding_y: self.height - (self.font_size + self.default_padding), 0
+
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Line:
+                        points: self.x, self.y, self.x + self.width, self.y
+                        width: 1
+        Filler:
+
+        Filler:
+
+        BoxLayout:
+            size_hint_y: None
+            height: default_height
+
+            CommandButton:
+                name: "cancel_button"
+                reverse: True
+                text: "Cancel"
+                font_size: "15sp"
+                on_press: root.dismiss()
+
+            Filler:
+
+            CommandButton:
+                name: "ok_button"
+                reverse: True
+                text: "OK"
+                font_size: "15sp"
+                on_press:
+                    self.event_data = root.value
+                    root.dismiss()
+
+
+<TestingApScreen@Screen>:
+
+    on_progress:
+        root.on_enter()
+        root.progress_run()
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Testing Password"
+
+        BoxLayout:
+            orientation: "vertical"
+
+            BoxLayout:
+                IotScreenLabel:
+                    text: root.display_text
+                    valign: 'top'
+
+            BoxLayout:
+                orientation: "vertical"
+                id: buttons
+                padding: [30,30]
+
+                ProgressBar:
+                    id: pb
+
+            Filler:
+
+
+<SameApScreen@Screen>:
+    ap: ""
+    connection_data: 'Go to WiFi setting of your device and select the WiFi network named "{}".'.format(self.ap)
+    success_data: "Once connected press Next"
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Guided Mode"
+
+        BoxLayout:
+            orientation: "vertical"
+            Filler:
+                size_hint_y: None
+                height: "25sp"
+
+            BoxLayout:
+                size_hint_y: None
+                padding: [20, 0]
+                height: default_height
+
+                CommandButton:
+                    text: "Cancel"
+                    reverse: True
+                    name: "back_button"
+                    font_size: "15sp"
+
+                Filler:
+
+                CommandButton:
+                    text: "Next"
+                    name: "next_button"
+                    size_hint_y: None
+                    height: default_height
+                    font_size: "15sp"
+                    pos_hint: {"bottom": 0.95, "right": 0.95}
+
+            Filler:
+                size_hint_y: None
+                height: 0.5 * default_height
+
+            BoxLayout:
+                orientation: "vertical"
+                IotScreenLabel:
+                    text: root.connection_data
+
+                IotScreenLabel:
+                    text: root.success_data
+
+
+            Filler:
+
+            Filler:
+
+<DeviceNameScreen@Screen>:
+    data: "Enter a name for Plasma System."
+    machine_name: ""
+
+    on_enter:
+        input_text.text = "UC_IOT_"
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Guided Mode"
+
+        BoxLayout:
+            orientation: "vertical"
+
+            Filler:
+                size_hint_y: None
+                height: "25sp"
+
+            BoxLayout:
+                size_hint_y: None
+                padding: [20, 0]
+                height: default_height
+
+                CommandButton:
+                    text: "Cancel"
+                    reverse: True
+                    name: "back_button"
+                    font_size: "15sp"
+
+                Filler:
+
+                CommandButton:
+                    id: next
+                    text: "Next"
+                    name: "next_button"
+                    size_hint_y: None
+                    height: default_height
+                    disabled: True
+                    font_size: "15sp"
+                    pos_hint: {"bottom": 0.95, "right": 0.95}
+                    on_press:
+                        self.event_data = root.machine_name
+
+            Filler:
+                size_hint_y: None
+                height: 0.5 * default_height
+
+            BoxLayout:
+                orientation: "vertical"
+
+                IotScreenLabel:
+                    text: "Enter the Plasma System Name"
+                    padding: [15, 0]
+                    halign: "center"
+
+                BoxLayout:
+                    orientation: "horizontal"
+
+                    Filler:
+                        size_hint_x: None
+                        width: 0.1 * self.parent.width
+
+                    LimitedCharTextInput:
+                        id: input_text
+                        text: root.machine_name
+                        foreground_color: 1, 1, 1, 0
+                        background_color: 0, 0, 0, 0
+                        multiline: False
+                        write_tab: False
+                        focus: False
+                        size_hint: None, None
+                        halign: "center"
+                        filter_regex: "\w"
+                        size: 0.8 * self.parent.width, default_height
+                        char_limit: 20
+
+                        on_text:
+                            root.machine_name = self.text
+                            next.disabled = False if (5 <= len(self.text)) else True
+
+                        canvas.before:
+                            Color:
+                                rgba: hex_code(text_button_theme)
+                            Line:
+                                points: self.x, self.y, self.x + self.width, self.y
+                                width: 1
+
+                    Filler:
+                        size_hint_x: None
+                        width: 0.1 * self.parent.width
+
+
+            Filler:
+
+            Filler:
+
+            Filler:
+
+
+
+<DeviceAddedScreen@Screen>:
+    machine_name: ""
+
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Guided Mode"
+
+        BoxLayout:
+            orientation: "vertical"
+
+            Filler:
+                size_hint_y: None
+                height: "25sp"
+
+            BoxLayout:
+                size_hint_y: None
+                padding: [20, 0]
+                height: default_height
+
+                CommandButton:
+                    text: "Cancel"
+                    reverse: True
+                    name: "back_button"
+                    font_size: "15sp"
+
+                Filler:
+
+                CommandButton:
+                    text: "Next"
+                    name: "next_button"
+                    reverse: True
+                    size_hint_y: None
+                    height: default_height
+                    font_size: "15sp"
+                    pos_hint: {"bottom": 0.95, "right": 0.95}
+
+            BoxLayout:
+                orientation: "vertical"
+
+                IotScreenLabel:
+                    text: '"{}" added.'.format(root.machine_name)
+                    padding: [15, 0]
+                    halign: "center"
+            Filler:
+
+<NoMaintenace>:
+    maintenance_name: ""
+
+    IotBaseLabel:
+        text: root.maintenance_name
+        halign: "left"
+
+<NodeAPConfigHint@BoxLayout>:
+    text: ""
+    scanning: False
+
+    TitleLabel:
+        text: root.text
+        halign: "left"
+        theme: title_theme
+        color: hex_code(text_button_theme)
+        padding: [20, 0]
+
+    LabelButton:
+        size_hint_x: 0.2
+        theme: title_theme
+        text: "\uf01e"
+        font_name: "fa"
+        color: text_button_theme
+        padding: [20, 0]
+        on_press: app.send_event("refresh_button_pressed")
+        disabled: root.scanning
+
+
+<NodeAPConfigScreen>:
+    ap_list: []
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Available Access Points"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [0, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                VarHeightBoxLayout:
+                    id: list_view
+                    NodeAPConfigHint:
+                        text: "No networks available"
+
+
+<ProcessSetupInputScreen>:
+    on_pre_enter: self.reset_all_input()
+
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Process Setup"
+
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: [0, 0]
+                    size_hint_y: None
+                    nchild: len(self.children)
+                    height: self.nchild * default_height * 2
+
+                    BoxLayout:
+                        orientation: "vertical"
+
+                        IotParamLabel:
+                            text: "Material"
+
+                        AutoSelectSpinner:
+                            id: material
+                            text: "Select Material"
+                            values: root.material_list
+                            on_text: root.param_selected(self.text, "material")
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        IotParamLabel:
+                            text: "Thickness"
+
+                        AutoSelectSpinner:
+                            id: thickness
+                            text: "Select Thickness"
+                            values: root.thickness_list
+                            on_text: root.param_selected(self.text, "thickness")
+                            default_padding: 10
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        IotParamLabel:
+                            text: "Amperage"
+
+                        AutoSelectSpinner:
+                            id: amperage
+                            text: "Select Amperage"
+                            values: root.amperage_list
+                            on_text: root.param_selected(self.text, "amperage")
+                            default_padding: 10
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        IotParamLabel:
+                            text: "Gas (plasma / shield)"
+
+                        AutoSelectSpinner:
+                            id: gas
+                            text: "Select Gas"
+                            values: root.gas_list
+                            on_text: root.param_selected(self.text, "gas")
+                            default_padding: 10
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        IotParamLabel:
+                            text: "Cutting Quality / Process"
+
+                        AutoSelectSpinner:
+                            id: cutting_quality
+                            text: "Select Cutting Quality"
+                            values: root.cutting_quality_list
+                            on_text: root.param_selected(self.text, "cutting_quality")
+                            default_padding: 10
+                    Filler:
+
+                    BoxLayout:
+                        size_hint_y: None
+                        height: default_height
+
+                        CommandButton:
+                            text: "Reset"
+                            font_size: "15sp"
+                            on_press: root.reset_all_input()
+
+                        Filler:
+
+                        CommandButton:
+                            id: submit_button
+                            text: "OK"
+                            font_size: "15sp"
+                            name: "submit_button"
+                            disabled: True
+                            on_press:
+                                self.disabled : True
+                                self.event_data =  root.get_param_list()
+
+<ProcessSetupBtn@CommandButton>:
+    height: default_height
+    size_hint_y: None
+    font_size: "15sp"
+    size_hint_x: 0.35
+    pos_hint: {"right": 1}
+
+
+<CutchartScreen@Screen>:
+    TopBoxLayout:
+
+        TitleBoxLayout:
+            title: "Cutchart Download"
+
+        BoxLayout:
+            orientation: "vertical"
+
+            Filler:
+                size_hint_y: None
+                height: "25sp"
+
+            BoxLayout:
+                size_hint_y: None
+                padding: [20, 0]
+                height: default_height
+
+            BoxLayout:
+                orientation: "vertical"
+
+                IotScreenLabel:
+                    text: 'Cutchart Downloaded.'
+                    padding: [15, 0]
+                    halign: "center"
+            Filler:
+
+
+<ProcessSetupTHCScreen>:
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "THC parameters and CNC parameters" if root.is_cutting else "Marking Parameters"
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            spacing: "25sp"
+
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    nchild: len(self.children)
+                    size_hint_y: None
+                    height: (root.n_values + self.nchild + 1) * default_height
+
+                    BoxLayout:
+                        ProcessLabel:
+                            text: "[b]Parameter[/b]"
+                            size_hint_x: 0.5
+                            markup: True
+                        ProcessLabel:
+                            text: "[b]Value[/b]"
+                            size_hint_x: 0.3
+                            markup: True
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        nchild: len(self.children)
+                        height: self.nchild * default_height
+                        id: output
+                        padding: 15
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        height: 2.5 * default_height
+                        padding: [15,10]
+
+                        ProcessSetupBtn:
+                            text: "Consumables"
+                            name: "consumable_button"
+                            disabled: False if root.param_list else True
+                            event_data: root.param_list
+
+                        Filler:
+                            size_hint_y: None
+                            height: 0.5 * default_height
+
+                        ProcessSetupBtn:
+                            text: "Marking" if root.is_cutting else "Cutting"
+                            disabled: False if root.param_list else True
+                            name: "marking_button" if root.is_cutting else "download_button"
+                            event_data: root.param_id_val_pair
+                            on_press:
+                                root.get_param_list()
+
+<ProcessSetupConsumablesScreen>:
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Consumables"
+        BoxLayout:
+            orientation: "vertical"
+            padding: [20, 0]
+            ScrollView:
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    nchild: len(self.children)
+                    height: (root.n_values + self.nchild) * default_height
+
+                    BoxLayout:
+                        ProcessLabel:
+                            text: "[b]Parameter[/b]"
+                            size_hint_x: 0.5
+                            markup: True
+                        ProcessLabel:
+                            text: "[b]Value[/b]"
+                            size_hint_x: 0.3
+                            markup: True
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        nchild: len(self.children)
+                        height: self.nchild * default_height
+                        id: output
+                        padding: 20
+
+                    BoxLayout:
+                        orientation: "vertical"
+                        size_hint_y: None
+                        nchild: len(self.children)
+                        height: self.nchild * default_height
+                        padding: [15,0]
+
+                        ProcessSetupBtn:
+                            text: "Cutting"
+                            name: "download_button"
+                            disabled: False if root.param_list else True
+                            size_hint_x: 0.3
+                            event_data: root.param_id_val_pair
+                            on_press:
+                                root.get_param_list()
+
+<ProgressBar>:
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        BorderImage:
+            border: (12, 12, 12, 12)
+            pos: self.x, self.center_y - 12
+            size: self.width, 28
+            source: 'atlas://data/images/defaulttheme/progressbar_background'
+        BorderImage:
+            border: [int(min(self.width * (self.value / float(self.max)) if self.max else 0, 12))] * 4
+            pos: self.x, self.center_y - 12
+            size: self.width * (self.value / float(self.max)) if self.max else 0, 28
+            source: 'atlas://data/images/defaulttheme/progressbar'
+
+<ProcessSetupLoadingScreen>:
+    on_progress:
+        app.send_event("download", root.param_data) if root.progress else root.on_enter()
+        root.progress_run()
+
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Sending cutchart"
+
+        Filler:
+
+        IotScreenLabel:
+            text: root.display_text
+            padding: [15,10]
+            halign: "center"
+            color: red
+
+        BoxLayout:
+            orientation: "vertical"
+            id: buttons
+            padding: [30,30]
+
+            ProgressBar:
+                id: pb
+
+        Filler:
+
+<CutchartVerifyLoadingScreen>:
+    on_progress:
+        root.on_enter()
+        root.progress_run()
+
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Uploading Cutchart"
+
+        Filler:
+
+        IotScreenLabel:
+            text: root.display_text
+            padding: [15,10]
+            halign: "center"
+            color: red
+
+        BoxLayout:
+            orientation: "vertical"
+            id: buttons
+            padding: [30,30]
+
+            ProgressBar:
+                id: pb
+
+        Filler:
+
+<ProcessCompareBox@ProcessBoxBase>:
+    data: {}
+    is_boolean: False
+    process_value: ""
+
+    ProcessLabel:
+        text: root.process_name
+        size_hint_x: 0.4
+
+    ProcessValueBox:
+        process_value: root.process_value2
+        is_boolean: root.is_boolean
+        size_hint_x: 0.3
+
+    ProcessValueBox:
+        process_value: root.process_value
+        is_boolean: root.is_boolean
+        size_hint_x: 0.3
+
+
+<CutchartCompareScreen>:
+
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Cutchart Compare"
+
+        ScrollView:
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                nchild: (root.n_values)+3
+                height: self.nchild * default_height
+
+                BoxLayout:
+                    ProcessLabel:
+                        text: "[b]Parameter[/b]"
+                        size_hint_x: 0.4
+                        markup: True
+                    ProcessLabel:
+                        text: "[b]Factory Value[/b]"
+                        size_hint_x: 0.3
+                        markup: True
+                    ProcessLabel:
+                        text: "[b]Actual Value[/b]"
+                        size_hint_x: 0.3
+                        markup: True
+
+                ProcessLabel:
+                    text: "[u][b]CUTTING:[b][u]"
+                    markup: True
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    nchild: len(self.children)
+                    height: self.nchild * default_height
+                    id: cutting
+
+                ProcessLabel:
+                    text: "[u][b]MARKING:[b][u]"
+                    markup: True
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    nchild: len(self.children)
+                    height: self.nchild * default_height
+                    id: marking
+
+
+<NameAndToggle>
+    ProcessLabel:
+        text: root.name
+        size_hint_x: 0.75
+        markup: True
+    BoxLayout:
+        size_hint_x: 0.25
+        Filler
+        ToggleSliderSwitch:
+            size_hint_max_x: sp(60)
+            state: "down" if root.state else "normal"
+            on_press:
+                root.state = not root.state
+                app.send_event("param_change", [(root.param_id, root.state)])
+        Filler
+
+<RoundedButton@Button>
+    original_color: True
+    normal_color: hex_code(actionbar_theme)
+    down_color: hex_code(push_button_theme)
+    background_color: (0,0,0,0)
+    background_normal: ""
+    pos_hint: {'x': 0,'y': .20}
+    canvas.before:
+        Color:
+            rgba: self.normal_color if self.original_color else self.down_color
+        RoundedRectangle:
+            size:self.size
+            pos: self.pos
+            radius: [10]
+    color: "white"
+
+<NameAndPush>
+    ProcessLabel:
+        text: root.name
+        size_hint_x: 0.75
+        markup: True
+    BoxLayout:
+        size_hint_x: 0.25
+        size_hint_y: 0.70
+        Filler
+        RoundedButton:
+            text: "Push"
+            size_hint_max_x: sp(60)
+            size_hint_max_y: sp(80)
+            on_state:
+                root.state = not root.state
+                app.send_event("param_change", [(root.param_id, root.state)])
+                self.original_color = False if self.original_color else True
+        Filler
+
+
+<NameAndTextInputBox>
+    ProcessLabel:
+        text: root.name
+        size_hint_x: 0.75
+        markup: True
+    BoxLayout:
+        size_hint_x: 0.25
+        size_hint_y: 0.6
+        NumericRangeInput:
+            text: root.default_text
+            range: root.range
+            foreground_color: 1, 1, 1, 1
+            background_color: 0, 0, 0, 0
+            default_padding: 10
+            on_enter_press:
+                app.send_event("param_change", [(root.param_id, self.text.rstrip())])
+
+            canvas.before:
+                Color:
+                    rgba: hex_code(text_button_theme)
+                Line:
+                    points: self.x, self.y, self.x + self.width, self.y
+                    width: 1
+
+
+<NameAndDropdown>
+    ProcessLabel:
+        text: root.name
+        size_hint_x: 0.75
+        markup: True
+    BoxLayout:
+        size_hint_x: 0.25
+        Spinner:
+            text: root.text if root.text else "Select A Value"
+            values: root.values
+            on_text:
+                app.send_event("param_change", [(root.param_id, root.map[self.text])])
+
+<ServiceFeatureScreen>:
+    on_param_ids:
+        app.send_event("get_service", root.param_ids) if root.param_ids != [] else root.on_enter()
+
+    TopBoxLayout:
+        TitleBoxLayout:
+            title: "Valve Check"
+
+        ProcessLabel:
+            text: "Caution: Misusing these functions can potentially damage the equipment and/or harm persons."
+            color: red
+            size_hint_y: None
+            height: default_height*2
+        BoxLayout:
+            size_hint_y: None
+            height: default_height*1.5
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Line:
+                    width: 1
+                    rectangle: self.x, self.y, self.width, self.height
+            ProcessLabel:
+                text: f"[b]Lock / Unlock[/b]"
+                size_hint_x: 0.75
+                markup: True
+            BoxLayout:
+                size_hint_x: 0.25
+                Filler
+                ToggleSliderSwitch:
+                    size_hint_max_x: sp(60)
+                    on_press:
+                        root.toggle_mount = not root.toggle_mount
+                        app.send_event("toggle_pressed", root.lock_unlock_service)
+                Filler
+
+        ScrollView:
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                nchild: len(self.children)
+                height: self.nchild * default_height
+                id: node
+
+
+<NetworkSettingsInputBox@BoxLayout>:
+    title_text: ""
+    hint_text: ""
+    input_text: ""
+    focus: False
+    password: False
+    size_hint_y: None
+    height: sp(70)
+    orientation: "vertical"
+    spacing: 0
+
+    IotBaseLabel:
+        text: root.title_text
+        halign: "left"
+
+    LimitedCharTextInput:
+        text: root.input_text
+        on_text: root.input_text = self.text
+        foreground_color: 1, 1, 1, 0
+        background_color: 0, 0, 0, 0
+        multiline: False
+        write_tab: False
+        default_padding: 10
+        size_hint_y: 0.5
+        hint_text: root.hint_text
+        padding_y: self.height - (self.font_size + self.default_padding), 0
+        password: root.password
+        on_focus: root.focus = self.focus
+
+        canvas.before:
+            Color:
+                rgba: hex_code(text_button_theme)
+            Line:
+                points: self.x, self.y, self.x + self.width, self.y
+                width: 1
+
+
+<PasswordInputBox@BoxLayout>:
+    title_text: ""
+    input_text: ""
+    hint_text: ""
+    focus: False
+    active: True
+    orientation: "vertical"
+    spacing: 0
+
+    IotBaseLabel:
+        size_hint_y: 0.30
+        text: root.title_text
+        halign: "left"
+
+    LimitedCharTextInput:
+        text: root.input_text
+        foreground_color: 1, 1, 1, 0
+        background_color: 0, 0, 0, 0
+        multiline: False
+        write_tab: False
+        password: False if root.active else True
+        size_hint_y: 0.35
+        hint_text: root.hint_text
+        on_text: root.input_text = self.text
+        on_focus: root.focus = self.focus
+
+        canvas.before:
+            Color:
+                rgba: hex_code(text_button_theme)
+            Line:
+                points: self.x, self.y, self.x + self.width, self.y
+                width: 1
+
+    Filler:
+        size_hint_y: 0.10
+
+    MenuCheckBoxLabel:
+        text: "Show password"
+        active: root.active
+        on_active: root.active = self.active
+        size_hint_y: 0.25
+
+
+<StaticSwitch>:
+    size_hint_y: None
+    height: sp(35)
+    keep_ratio: True
+
+
+<ApAuthScreen@Screen>:
+    bssid: "24:a4:3c:9e:d2:84"
+    ssid: ""
+    encrypt_type: "WPA2"
+    rssi: "Good"
+    hidden: "No"
+    reverse_connect_btn: False
+
+    on_pre_enter:
+        password.input_text = ""
+        is_static.state = "normal"
+        ip.input_text = ""
+        subnet.input_text = ""
+        gateway.input_text = ""
+        password.active = True
+
+    TopBoxLayout:
+        spacing: 10
+
+        TitleBoxLayout:
+            title: "Network Settings"
+
+        BoxLayout:
+            size_hint_y: None
+            padding: [20, 0]
+            height: default_height
+
+            CommandButton:
+                text: "Cancel"
+                reverse: True
+                name: "cancel_button"
+                font_size: "15sp"
+
+            Filler:
+
+            CommandButton:
+                text: "Connect"
+                reverse: root.reverse_connect_btn
+                name: "connect_button"
+                font_size: "15sp"
+                on_press:
+                    ap_params = NetworkParams(root.bssid, root.ssid, password.input_text.strip(), is_static.active, ip.input_text.strip(), subnet.input_text.strip(), gateway.input_text.strip())
+                    self.event_data = ap_params
+
+        ScrollView:
+            id: scroll
+
+            BoxLayout:
+                id: main
+                orientation: "vertical"
+                padding: [20, 0]
+                size_hint_y: None
+                # If the boxlayout height is not specified the height
+                # of the boxlayout will be restricted to the height of
+                # the screen. Hence computing and specifying the height
+                # based on the children height
+                height: (len(self.children) - 2) * sp(70) + network_info.height + filler.height
+                BoxLayout:
+                    id: network_info
+                    size_hint_y: None
+                    height: sp(100)
+                    orientation: "vertical"
+
+                    IotBaseLabel:
+                        text: "BSSID : {}\nEncryption type : {}\nStrength : {}\nHidden : {}".format(root.bssid, root.encrypt_type, root.rssi, root.hidden)
+                        halign: "left"
+
+                PasswordInputBox:
+                    id: password
+                    title_text: "Password"
+
+                BoxLayout:
+                    size_hint_y: None
+                    height: sp(70)
+
+                    IotBaseLabel:
+                        text: "Use static IP"
+                        halign: "left"
+
+                    StaticSwitch:
+                        id: is_static
+                        scroll: scroll
+                        sta_params: [ip, subnet, gateway]
+                        size_hint_max_x: sp(60)
+
+                NetworkSettingsInputBox:
+                    id: ip
+                    title_text: "IP"
+                    scroll: scroll
+                    layout: main
+
+                NetworkSettingsInputBox:
+                    id: subnet
+                    title_text: "Subnet Mask"
+                    scroll: scroll
+                    layout: main
+
+                NetworkSettingsInputBox:
+                    id: gateway
+                    title_text: "Gateway"
+                    scroll: scroll
+                    layout: main
+
+                Filler:
+                    id: filler
+                    size_hint_y: None
+                    height: (Window.height / 2)
+
+
+<Switcher@ScreenManager>:
+    HomeScreen:
+        name: "home_screen"
+
+    SettingsScreen:
+        name: "settings_screen"
+
+    MachinesListScreen:
+        name: "machine_config_screen"
+
+    MachineScanScreen:
+        name: "machine_scan_screen"
+
+    MachineEditScreen:
+        name: "machine_edit_screen"
+
+    NodeAPConfigScreen:
+        name: "node_ap_config_screen"
+
+    ApAuthScreen:
+        name: "ap_auth_screen"
+        reverse_connect_btn: True
+
+    ApAuthScreen:
+        name: "ap_authentication_screen"
+
+    ProcessSetupInputScreen:
+        name: "process_setup_input_screen"
+
+    ProcessSetupTHCScreen:
+        name: "process_setup_thc_screen"
+
+    ProcessSetupConsumablesScreen:
+        name: "process_setup_consumables_screen"
+
+    ProcessSetupLoadingScreen:
+        name: "process_setup_loading_screen"
+
+    CutchartVerifyLoadingScreen:
+        name: "cutchart_verify_loading_screen"
+
+    CutchartCompareScreen:
+        name: "cutchart_compare_screen"
+
+    ServiceFeatureScreen:
+        name: "service_feature_screen"
+
+    ServiceMenu:
+        name: "service_menu_screen"
+
+    MachineAdd:
+        name:  "machine_add_screen"
+
+    CuttingScreen:
+        name: "cutting_screen"
+
+    ServiceScreen:
+        name: "service_screen"
+
+    MaintenanceScreen:
+        name: "maintenance_screen"
+
+    CutQualityTipsScreen:
+        name: "cut_quality_tips_screen"
+
+    ErrorsScreen:
+        name: "errors_screen"
+
+    ErrorInformationScreen:
+        name: "error_information"
+
+    MaintenanceScheduleScreen:
+        name: "maintenance_schedule_screen"
+
+    SerialNumInputScreen:
+        name: "node_config_intro_screen"
+
+    ApConnectScreen:
+        name: "ap_connection_screen"
+
+    ConnectionApScreen:
+        name: "connection_screen"
+
+    TestingApScreen:
+        name: "ap_password_test_screen"
+
+    SameApScreen:
+        name: "same_ap_screen"
+
+    DeviceNameScreen:
+        name: "device_name_screen"
+
+    DeviceAddedScreen:
+        name: "device_added_screen"
+
+
+<Main>:
+    orientation: 'vertical'
+    padding: [0, 0, 0, 20]
+
+    canvas.before:
+        Color:
+            rgba: hex_code(background_theme)
+        Rectangle:
+            size: self.size
+
+    Switcher:
+        id: switcher

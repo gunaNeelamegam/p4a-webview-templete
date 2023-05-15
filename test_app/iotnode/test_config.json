@@ -1,0 +1,14 @@
+{
+  "poll period": 500,
+  "machines": [
+    {
+      "name": "Numorex - 1",
+      "ip": "172.11.18.116",
+      "port": 8000,
+      "torch_style": "21",
+      "hose_length": "23 m"
+    }
+  ],
+  "version": 5,
+  "unit type": "METRIC"
+}

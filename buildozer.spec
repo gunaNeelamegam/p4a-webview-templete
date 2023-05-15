@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = p4a unit tests
+title = sample-app
 
 # (str) Package name
-package.name = p4aunittests
+package.name = sample
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = org.kivy
@@ -13,7 +13,7 @@ package.domain = org.kivy
 source.dir = test_app
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,html,css,otf,txt
+source.include_exts = py,png,jpg,kv,atlas,html,css,otf,txt,jinja,yaml,yml
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -36,7 +36,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = ,python3,flask,libffi,openssl,sqlite3,pyjnius
+requirements = python3,flask,genericndkbuild,libffi,openssl,sqlite3,pyjnius,sismic==1.6.2,ruamel_yaml==0.17.4,schema==0.7.4,six,pyrsistent==0.17.3,attrs==21.2.0,importlib-metadata,setuptools,aiohttp==3.7.4,async-timeout==3.0.1,typing-extensions==3.10.0.0,chardet==4.0.0,yarl==1.6.3,multidict==5.1.0,idna==2.10,jsonrpc-websocket==3.1.0,jsonrpc-base==2.1.0,jsonschema==3.2.0,aiozeroconf==0.1.8,netifaces==0.11.0,requests==2.28.2,urllib3==1.26.14,certifi==2022.12.7,charset-normalizer==3.0.1,packaging==23.0
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -46,10 +46,10 @@ requirements = ,python3,flask,libffi,openssl,sqlite3,pyjnius
 #garden_requirements =
 
 # (str) Presplash of the application
-#presplash.filename = %(source.dir)s/data/presplash.png
+presplash.filename = %(source.dir)s/data/presplash.png
 
 # (str) Icon of the application
-#icon.filename = %(source.dir)s/data/icon.png
+icon.filename = %(source.dir)s/data/icon.png
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
@@ -85,10 +85,10 @@ fullscreen = 0
 #android.presplash_color = #FFFFFF
 
 # (list) Permissions
-android.permissions = INTERNET,VIBRATE
+android.permissions = INTERNET,VIBRATE,CAMERA
 
 # (int) Target Android API, should be as high as possible.
-#android.api = 27
+#android.api = 33
 
 # (int) Minimum API your APK will support.
 #android.minapi = 21
@@ -196,7 +196,9 @@ android.arch = armeabi-v7a,arm64-v8a
 
 #
 # Python for android (p4a) specific
-#
+android.useAndroidX=true
+android.enableJetifier=true
+
 
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
 #p4a.source_dir = 

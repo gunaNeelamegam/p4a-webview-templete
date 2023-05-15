@@ -1,0 +1,86 @@
+<!--                            
+
+Success Html content
+
+                            -->
+
+<style>
+  .button:hover {
+    background-color: #2d566b;
+  }
+  
+  .modal-container.active {
+    display: block;
+  }
+  
+  .modal-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+  }
+  
+  .modal {
+    margin: auto;
+    width: 90%;
+    max-width: 40rem;
+    background-color: white;
+    border-radius: 1.5rem;
+  }
+  
+  .modal-header,
+  .modal-content {
+    padding: 1.5rem;
+  }
+  
+  .btn-row {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .succes-btn {
+    background-color: green;
+    color: white;
+    height: 1.5rem;
+    text-align: center;
+    font-family: 'Poppins';
+    font-weight: 600;
+    width: 2rem;
+  }
+  .failure-btn {
+    background-color: red;
+    color: white;
+    height: 1.5rem;
+    text-align: center;
+    font-family: 'Poppins';
+    font-weight: 600;
+    width: 2rem;
+  }
+</style>
+
+<script>
+  function toogleModel() {
+    const model = document.getElementsByClassName('modal-container')
+    model.classList.toggle('active')
+    console.log(model.classList)
+  }
+</script>
+<button class="button" onclick="toogleModel()"></button>
+<div id="myModal" class="modal">
+  <div class="modal-content">
+    <div class="success-btn">Success</div>
+    <div class="failure-btn">Failure</div>
+  </div>
+  <div class="btn-row">
+    <span class="close">close</span>
+    <span class="retry">retry</span>
+  </div>
+</div>
