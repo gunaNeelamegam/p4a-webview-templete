@@ -1,9 +1,10 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: "Roboto Slab", Roboto, sans-serif;
+    font-family: "Poppins";
     color: white;
     scroll-behavior: smooth;
+    box-sizing: border-box;
 }
 
 
@@ -12,6 +13,8 @@ body {
  * Navbar
  */
 .menu {
+    font-family: "Poppins";
+    font-weight: 600;
     top: 0;
     margin: 0;
     display: flex;
@@ -123,7 +126,3 @@ footer {
     cursor: pointer;
 
 }
-
-/**
-* CAMREA
-*/

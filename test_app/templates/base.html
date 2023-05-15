@@ -9,23 +9,23 @@
   </head>
   <body>
     <header>
-        <nav>
-          <ul class="menu">
-            <li>
-              <a>EASB IOT NODE</a>
-            </li>
-            <li class="version">
-              <a>v1.1</a>
-            </li>
-          </ul>
-        </nav>
+      <nav>
+        <ul class="menu">
+          <li>
+            <a>EASB IOT NODE</a>
+          </li>
+          <li class="version">
+            <a>v1.1</a>
+          </li>
+        </ul>
+      </nav>
     </header>
     <div class="main-container">
       {% block body %}
         {{ platform }}
         {{ show_add.is_show }}
       {% endblock %}
-      <img src="{{ url_for('static', filename = '/images/iotnode.png') }}" class="img-fluid" style="margin-top: 1rem;" />
+      <img src="{{ url_for('static', filename = '/images/iotnode.png') }}" class="img-fluid" style="margin-top: 1rem;height:5rem;" />
     </div>
     {% extends 'footer.html' %}
   </body>

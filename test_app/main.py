@@ -1,18 +1,15 @@
 import sys
-import unittest
-from routes import flask_app
 from os import curdir
 from os.path import isfile, realpath
 from sismic.io import import_from_yaml
 from sismic.interpreter import Interpreter
-import asyncio
+from routes import FlaskApp
+from version import version
 
-print("Imported unittest")
+
+import os
 
 sys.path.append("./")
-
-# read `app_requirements.txt` and find out which tests to perform
-tests_to_perform = {}
 requirements = None
 if isfile("app_requirements.txt"):
     with open("app_requirements.txt", "r") as requirements_file:
@@ -20,19 +17,13 @@ if isfile("app_requirements.txt"):
 if not requirements:
     # we will test a basic set of recipes
     requirements = {"sqlite3", "libffi", "openssl", "pyjnius", "flask"}
-print("App requirements are: ", requirements)
-
 for recipe in requirements:
     test_name = "tests.test_requirements.{recipe}TestCase".format(
         recipe=recipe.capitalize()
     )
-import os
 
 if __name__ == "__main__":
     if "flask" in requirements:
-        print(f"inside Test to perform : {tests_to_perform}")
-
-        print("Current directory is ", realpath(curdir))
         flask_debug = not realpath(curdir).startswith("/data")
 
         # Flask is run non-threaded since it tries to resolve app classes
@@ -41,9 +32,8 @@ if __name__ == "__main__":
         # threads.
         #
         # https://github.com/kivy/python-for-android/issues/2533
-        statechart = import_from_yaml(filepath=f"{os.curdir}/iotnode/statecharts/main.yml")
+        statechart = import_from_yaml(
+            filepath=f"{os.curdir}/iotnode/statecharts/main.yml"
+        )
         interpreter = Interpreter(statechart)
-
-        loop = asyncio.get_event_loop()
-        print(f"CURRENT EVENT LOOP  : {loop}")
-        flask_app.run(threaded=False, debug=flask_debug)
+        FlaskApp = FlaskApp.IOTNodeFlaskApp(interpreter,version=version)

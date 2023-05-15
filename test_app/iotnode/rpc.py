@@ -10,7 +10,11 @@ import asyncio
 import aiohttp
 
 import jsonschema
-from kivy.logger import Logger
+
+try:
+    from kivy.logger import Logger
+except ModuleNotFoundError as e:
+    pass
 from jsonrpc_websocket import Server
 from jsonrpc_base import TransportError, ProtocolError
 from .cut_chart_fetcher import CutChartParam
@@ -213,7 +217,11 @@ class IotNodeInterface:
         if url is None:
             return False
 
-        if self._ws_client and self._ws_client._url == url and self._ws_client.connected:
+        if (
+            self._ws_client
+            and self._ws_client._url == url
+            and self._ws_client.connected
+        ):
             return True
 
         return False
@@ -264,8 +272,7 @@ class IotNodeInterface:
             asyncio.ensure_future(self._close())
         else:
             self._try_conn_task = asyncio.ensure_future(self.try_connect(retry_period))
-  
- 
+
     async def try_connect(self, retry_period: int) -> None:
         """Retry connection for every retry_period.
 
@@ -296,8 +303,12 @@ class IotNodeInterface:
                 if isinstance(version, int):
                     self._version = version
                 else:
-                    Logger.warning("Received invalid version type %s", type(version))
-
+                    try:
+                        Logger.warning(
+                            "Received invalid version type %s", type(version)
+                        )
+                    except ModuleNotFoundError as e:
+                        pass
                 await self.read_data()
 
     def _process_read_data(self, data):
@@ -306,7 +317,10 @@ class IotNodeInterface:
         except jsonschema.exceptions.ValidationError as exc:
             err_path = "/".join(str(i) for i in exc.absolute_path)
             err = "Read data validation failed at /{}".format(err_path)
-            Logger.warning(err)
+            try:
+                Logger.warning(err)
+            except ModuleNotFoundError as err:
+                pass
         else:
             self._trigger_cbs(data)
 
@@ -325,7 +339,10 @@ class IotNodeInterface:
             try:
                 data = await self._ws_client.read_data()
             except (ProtocolError, TransportError, ConnectionError) as exc:
-                Logger.warning(exc)
+                try:
+                    Logger.warning(exc)
+                except ModuleNotFoundError as e:
+                    pass
                 await self._close()
                 return
 
@@ -361,7 +378,10 @@ class IotNodeInterface:
         except jsonschema.exceptions.ValidationError as exc:
             err_path = "/".join(str(i) for i in exc.absolute_path)
             err = "List networks validation failed at /{}".format(err_path)
-            Logger.warning(err)
+            try:
+                Logger.warning(err)
+            except ModuleNotFoundError as e:
+                pass
             self._send_event_cb("error")
         else:
             self._send_event_cb("list_networks_resp", value=networks)
@@ -419,7 +439,10 @@ class IotNodeInterface:
         except jsonschema.exceptions.ValidationError as exc:
             err_path = "/".join(str(i) for i in exc.absolute_path)
             err = "Dynamic IP Response JSON Validation failed{}".format(err_path)
-            Logger.warning(err)
+            try:
+                Logger.warning(err)
+            except ModuleNotFoundError as e:
+                pass
             self._send_event_cb("error")
         else:
             ip = response["IP"]
@@ -444,7 +467,9 @@ class IotNodeInterface:
           bssid: bssid of the network to be connected
           password: password of the network to be connected.
         """
-        asyncio.ensure_future(self.select_network(bssid, password, is_static, ip, subnet, gateway))
+        asyncio.ensure_future(
+            self.select_network(bssid, password, is_static, ip, subnet, gateway)
+        )
 
     async def select_network(
         self,
@@ -485,7 +510,7 @@ class IotNodeInterface:
     def chunks(self, lst):
         """Yield successive n-sized chunks from lst."""
         for i in range(0, len(lst), self.CHUNK_SIZE):
-            yield lst[i:i + self.CHUNK_SIZE]
+            yield lst[i : i + self.CHUNK_SIZE]
 
     async def _set_params(self, data: list):
         async def main():
@@ -498,7 +523,9 @@ class IotNodeInterface:
         await self._send_server_req(main)
 
     async def _unlock_sequence(self):
-        pv_list = [(param, self.unlock_param_val) for param in self.lock_unlock_param_ids]
+        pv_list = [
+            (param, self.unlock_param_val) for param in self.lock_unlock_param_ids
+        ]
         await self._set_params(pv_list)
 
     async def _lock_sequence(self):
@@ -510,7 +537,9 @@ class IotNodeInterface:
             good_status = await self._validate_reinit_else_send_error()
             if not good_status:
                 return None
-            res = await self._ws_client.get_params(pid=[CutChartParam.PARAM_ID_PROCESS_ID])
+            res = await self._ws_client.get_params(
+                pid=[CutChartParam.PARAM_ID_PROCESS_ID]
+            )
             # FIXME: Need to validate results?
             # FIXME: Need to handle Exceptions?
             process_id_value = res[0][1]
@@ -558,7 +587,9 @@ class IotNodeInterface:
                 good_status = await self._validate_reinit_else_send_error()
                 if not good_status:
                     return None
-                res = await self._send_server_req(self._ws_client.get_params, pid=chunck)
+                res = await self._send_server_req(
+                    self._ws_client.get_params, pid=chunck
+                )
                 if res:
                     temp.extend(res)
             self._send_event_cb("got_service_data", value=dict(temp))

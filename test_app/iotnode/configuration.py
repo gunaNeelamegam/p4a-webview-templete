@@ -16,9 +16,13 @@ from typing import Tuple
 from enum import Enum
 
 import jsonschema
-from kivy.logger import Logger
 
+try:
+    from kivy.logger import Logger
+except ModuleNotFoundError as e:
+    pass
 from .utils import VResult, validate_ip
+
 
 class UnitType(Enum):
     IMPERIAL = 0
@@ -79,7 +83,21 @@ class Machines:
             # Hose length value was in meters
             "ip": {"type": "string", "anyOf": [{"format": "ipv4"}, {"format": "ipv6"}]},
             "port": {"type": "integer", "minimum": 1, "maximum": 65535},
-            "hose_length": {"type": "string", "enum": ["3.0 m", "4.6 m", "7.6 m", "10.6 m", "15.2 m", "23 m", "30.5 m", "38.0 m", "45.6 m", "53.3 m"]},
+            "hose_length": {
+                "type": "string",
+                "enum": [
+                    "3.0 m",
+                    "4.6 m",
+                    "7.6 m",
+                    "10.6 m",
+                    "15.2 m",
+                    "23 m",
+                    "30.5 m",
+                    "38.0 m",
+                    "45.6 m",
+                    "53.3 m",
+                ],
+            },
             "torch_style": {"type": "string", "enum": ["21", "22"]},
         },
     }
@@ -94,16 +112,40 @@ class Machines:
             # Hose length value was in meters
             "ip": {"type": "string", "anyOf": [{"format": "ipv4"}, {"format": "ipv6"}]},
             "port": {"type": "integer", "minimum": 1, "maximum": 65535},
-            "hose_length": {"type": "string", "enum": ["3.0 m", "4.6 m", "7.6 m", "10.6 m", "15.2 m", "23 m", "30.5 m", "38.0 m", "45.6 m", "53.3 m"]},
+            "hose_length": {
+                "type": "string",
+                "enum": [
+                    "3.0 m",
+                    "4.6 m",
+                    "7.6 m",
+                    "10.6 m",
+                    "15.2 m",
+                    "23 m",
+                    "30.5 m",
+                    "38.0 m",
+                    "45.6 m",
+                    "53.3 m",
+                ],
+            },
             "torch_style": {"type": "string", "enum": ["21", "22"]},
         },
     }
 
-    V1_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v1, format_checker=jsonschema.FormatChecker())
-    V2_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v2, format_checker=jsonschema.FormatChecker())
-    V3_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v3, format_checker=jsonschema.FormatChecker())
-    V4_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v4, format_checker=jsonschema.FormatChecker())
-    V5_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v5, format_checker=jsonschema.FormatChecker())
+    V1_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v1, format_checker=jsonschema.FormatChecker()
+    )
+    V2_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v2, format_checker=jsonschema.FormatChecker()
+    )
+    V3_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v3, format_checker=jsonschema.FormatChecker()
+    )
+    V4_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v4, format_checker=jsonschema.FormatChecker()
+    )
+    V5_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v5, format_checker=jsonschema.FormatChecker()
+    )
 
     def __init__(self):
         self._machines = OrderedDict()
@@ -190,31 +232,33 @@ class Machines:
 
 class Configuration:
     """Loads, validates and stores the configuration."""
+
     LATEST_VERSION = 5
 
     HOSE_LENGTH_MET2IMP = {
-    "3.0 m":"10 ft",
-    "4.6 m":"15 ft",
-    "7.6 m":"25 ft",
-    "10.6 m":"35 ft",
-    "15.2 m":"50 ft",
-    "23 m":"75 ft",
-    "30.5 m":"100 ft",
-    "38.0 m":"125 ft",
-    "45.6 m":"150 ft",
-    "53.3 m":"175 ft"}
+        "3.0 m": "10 ft",
+        "4.6 m": "15 ft",
+        "7.6 m": "25 ft",
+        "10.6 m": "35 ft",
+        "15.2 m": "50 ft",
+        "23 m": "75 ft",
+        "30.5 m": "100 ft",
+        "38.0 m": "125 ft",
+        "45.6 m": "150 ft",
+        "53.3 m": "175 ft",
+    }
 
     HOSE_LENGTH_IMP2MET = {
-    "10 ft": "3.0 m",
-    "15 ft": "4.6 m",
-    "25 ft": "7.6 m",
-    "35 ft": "10.6 m",
-    "50 ft": "15.2 m",
-    "75 ft": "23 m",
-    "100 ft": "30.5 m",
-    "125 ft": "38.0 m",
-    "150 ft": "45.6 m",
-    "175 ft": "53.3 m"
+        "10 ft": "3.0 m",
+        "15 ft": "4.6 m",
+        "25 ft": "7.6 m",
+        "35 ft": "10.6 m",
+        "50 ft": "15.2 m",
+        "75 ft": "23 m",
+        "100 ft": "30.5 m",
+        "125 ft": "38.0 m",
+        "150 ft": "45.6 m",
+        "175 ft": "53.3 m",
     }
 
     SCHEMA_v1 = {
@@ -271,12 +315,21 @@ class Configuration:
         },
     }
 
-    V1_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v1, format_checker=jsonschema.FormatChecker())
-    V2_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v2, format_checker=jsonschema.FormatChecker())
-    V3_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v3, format_checker=jsonschema.FormatChecker())
-    V4_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v4, format_checker=jsonschema.FormatChecker())
-    V5_VALIDATOR = jsonschema.Draft7Validator(SCHEMA_v5, format_checker=jsonschema.FormatChecker())
-
+    V1_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v1, format_checker=jsonschema.FormatChecker()
+    )
+    V2_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v2, format_checker=jsonschema.FormatChecker()
+    )
+    V3_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v3, format_checker=jsonschema.FormatChecker()
+    )
+    V4_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v4, format_checker=jsonschema.FormatChecker()
+    )
+    V5_VALIDATOR = jsonschema.Draft7Validator(
+        SCHEMA_v5, format_checker=jsonschema.FormatChecker()
+    )
 
     def __init__(self):
         self.poll_period = 500
@@ -315,7 +368,7 @@ class Configuration:
             err_path = "/".join(str(i) for i in exc.absolute_path)
             raise ConfigLoadError(f"JSON validation failed at {err_path}")
 
-    def hose_data(self,is_metric):
+    def hose_data(self, is_metric):
         if is_metric:
             return list(map(str, self.HOSE_LENGTH_IMP2MET.values()))
         else:
@@ -460,8 +513,22 @@ class Configuration:
     @staticmethod
     def _validate_machine_hose_length(length: str) -> VResult:
         # Hose length value was in meters
-        if length not in ["3.0 m", "4.6 m", "7.6 m", "10.6 m", "15.2 m", "23 m", "30.5 m", "38.0 m", "45.6 m", "53.3 m"]:
-            return VResult(False, "Hose length is none of these values 3.0, 4.6, 7.6, 10.6, 15.2, 23, 30.5, 38.0, 45.6, 53.3.")
+        if length not in [
+            "3.0 m",
+            "4.6 m",
+            "7.6 m",
+            "10.6 m",
+            "15.2 m",
+            "23 m",
+            "30.5 m",
+            "38.0 m",
+            "45.6 m",
+            "53.3 m",
+        ]:
+            return VResult(
+                False,
+                "Hose length is none of these values 3.0, 4.6, 7.6, 10.6, 15.2, 23, 30.5, 38.0, 45.6, 53.3.",
+            )
         return VResult(True, "")
 
     @staticmethod
@@ -496,7 +563,9 @@ class Configuration:
     def validate_add_machine(self, machine) -> VResult:
         machine_list = self.machines.list()
         if machine["name"] in machine_list:
-            msg = "Machine with name '{}' already exists\n Do you want to overwrite it?".format(machine["name"])
+            msg = "Machine with name '{}' already exists\n Do you want to overwrite it?".format(
+                machine["name"]
+            )
             return VResult(False, msg)
         return self.validate_machine(machine)
 
@@ -525,11 +594,17 @@ class Configuration:
             with open(filename, "r") as fp:
                 self.curr_machine = fp.read().strip()
         except OSError as err:
-            Logger.warning("Loading failed: %s", err)
+            try:
+                Logger.warning(err)
+            except ModuleNotFoundError as e:
+                pass
 
     def update_last_selected_machine(self, filename: str):
         try:
             with open(filename, "w") as fp:
                 fp.write(self.curr_machine)
         except OSError as err:
-            Logger.warning("Updating failed: %s", err)
+            try:
+                Logger.warning("Updating failed: %s", err)
+            except ModuleNotFoundError as e:
+                pass

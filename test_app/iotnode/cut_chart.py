@@ -5,7 +5,11 @@ file.
 # pylint: disable=import-error
 from typing import NamedTuple, List, Tuple
 from collections import OrderedDict
-from kivy.logger import Logger
+
+try:
+    from kivy.logger import Logger
+except ModuleNotFoundError as e:
+    pass
 
 import csv
 
@@ -28,6 +32,7 @@ class MatchParams(NamedTuple):
 
 class InputParams(NamedTuple):
     """Maps the row of values as tuple for the corresponding field"""
+
     process_id: str
     marking_process_id: str
     material: str
@@ -42,21 +47,23 @@ class InputParams(NamedTuple):
 
 class CutChart:
     """Defines methods to load and query the CSV file
-    
+
     Args:
         filename: absolute filepath of cutchart csv
     """
 
-    PARAM_COL_IDX = {"cutting_quality": 7,
-                     "thickness": 4,
-                     "is_thickness_inch": 5,
-                     "thickness_inch": 6,
-                     "material": 3,
-                     "plasma_gas": 69,
-                     "shield_gas": 71,
-                     "process_id": 1,
-                     "marking_process_id": 2,
-                     "amperage": 55}
+    PARAM_COL_IDX = {
+        "cutting_quality": 7,
+        "thickness": 4,
+        "is_thickness_inch": 5,
+        "thickness_inch": 6,
+        "material": 3,
+        "plasma_gas": 69,
+        "shield_gas": 71,
+        "process_id": 1,
+        "marking_process_id": 2,
+        "amperage": 55,
+    }
     FILTER_COL = 0
     PARAM_ID_COL_NO = 2
     PARAM_START_COL_NO = 36
@@ -65,22 +72,26 @@ class CutChart:
 
     def __init__(self, filename):
         self._filename = filename
-        self.params_in_sorted_col_index = OrderedDict(sorted(CutChart.PARAM_COL_IDX.items(),
-                                                             key=lambda item: item[1]))
-        self.cutchart_revision  = self._get_cutchart_revision()
+        self.params_in_sorted_col_index = OrderedDict(
+            sorted(CutChart.PARAM_COL_IDX.items(), key=lambda item: item[1])
+        )
+        self.cutchart_revision = self._get_cutchart_revision()
 
     def _get_cutchart_revision(self):
         try:
             with open(self._filename) as csvfile:
                 data = csv.reader(csvfile)
                 for row in data:
-                    if row[0] == 'h' and row[1] == 'Rev':
-                        return '{}.{}.{}'.format(row[3], row[4], row[5])
+                    if row[0] == "h" and row[1] == "Rev":
+                        return "{}.{}.{}".format(row[3], row[4], row[5])
         except OSError as exc:
-            Logger.error(exc)
+            try:
+                Logger.error(exc)
+            except ModuleNotFoundError as e:
+                pass
 
     def load_process_list(self) -> List[InputParams]:
-        """Loads and filters cutting row values 
+        """Loads and filters cutting row values
 
         Returns:
             Records of cut chart data
@@ -99,9 +110,11 @@ class CutChart:
             filtered_row = filter(is_cutting_row, csv.reader(file))
             return list(map(get_req_col, filtered_row))
 
-    def query_with_process_param(self, process_list: List[InputParams], **kwargs) -> list:
+    def query_with_process_param(
+        self, process_list: List[InputParams], **kwargs
+    ) -> list:
         """Get filtered process list
-        
+
         Args:
             process_list: List of row column data to apply filter
 
@@ -125,6 +138,7 @@ class CutChart:
                 if input_params._asdict()[match_param.param_name] != match_param.value:
                     return False
             return True
+
         return list(filter(match, process_list))
 
     def query_with_process_id(self, process_id: str):
@@ -146,19 +160,19 @@ class CutChart:
             return False
 
         with open(self._filename, "r") as file:
-            cutting_row = next(filter(is_process_id_match, csv.reader(file)),
-                               None)
+            cutting_row = next(filter(is_process_id_match, csv.reader(file)), None)
             if cutting_row is None:
                 raise Error("Invalid Process ID")
             process_id = cutting_row[marking_processid_index]
 
         with open(self._filename, "r") as file:
-            marking_row = next(filter(is_process_id_match, csv.reader(file)),
-                               None)
+            marking_row = next(filter(is_process_id_match, csv.reader(file)), None)
 
         return cutting_row, marking_row
 
-    def get_param_id_list(self, need_filter: bool=False) -> Tuple[List[int], List[int]]:
+    def get_param_id_list(
+        self, need_filter: bool = False
+    ) -> Tuple[List[int], List[int]]:
         """Gets Param id and Marking param id values
 
         Returns:
@@ -166,7 +180,7 @@ class CutChart:
         """
 
         def is_param_id_row(row):
-            return row[CutChart.PARAM_ID_COL_NO-1] == "ParamID"
+            return row[CutChart.PARAM_ID_COL_NO - 1] == "ParamID"
 
         def skip_param_id_ranges(param_id_list):
             filtered_param_id = []
@@ -179,13 +193,15 @@ class CutChart:
 
         with open(self._filename, "r") as file:
             row = next(filter(is_param_id_row, csv.reader(file)), None)
-            idx = CutChart.PARAM_START_COL_NO-1
+            idx = CutChart.PARAM_START_COL_NO - 1
             param_id_list = row[idx:-1]
             param_id_list = list(map(int, param_id_list))
 
             if need_filter:
                 param_id_list = skip_param_id_ranges(param_id_list)
 
-            def offset_func(a): return (a+self.MARKING_PARAM_ID_OFFSET)
+            def offset_func(a):
+                return a + self.MARKING_PARAM_ID_OFFSET
+
             marking_param_id_list = list(map(offset_func, param_id_list))
             return (param_id_list, marking_param_id_list)

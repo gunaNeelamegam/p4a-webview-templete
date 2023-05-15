@@ -1,4 +1,7 @@
-from kivy.logger import Logger
+try:
+    from kivy.logger import Logger
+except ModuleNotFoundError as e:
+    pass
 import csv
 
 class MaintenanceMenu():
@@ -18,4 +21,7 @@ class MaintenanceMenu():
                         maintenance_links[row[1]]=row[4]
                 return maintenance_links
         except FileNotFoundError as exec:
-            Logger.error(exec)
+            try:
+                Logger.error(exec)
+            except ModuleNotFoundError as e:
+                pass

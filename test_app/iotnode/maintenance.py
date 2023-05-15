@@ -8,7 +8,11 @@ import json
 import argparse
 
 from typing import Dict, List
-from kivy.logger import Logger
+
+try:
+    from kivy.logger import Logger
+except ModuleNotFoundError as e:
+    pass
 import jsonschema
 
 
@@ -30,7 +34,7 @@ class Args(argparse.ArgumentParser):
 
 class MaintenanceScheduler:
     """Class to handle notification schedule maintenance
-    
+
     Attributes:
         current_schedule: Stores current schedule.
         last_maintenace_schedule: Stores last maintened schedule.
@@ -150,7 +154,9 @@ class MaintenanceScheduler:
         """
         self.last_maintenace_schedule = self._read_from_db(filepath)
 
-    def save(self, filepath: os.PathLike, hrs_notifications: Dict[str, List[str]]) -> None:
+    def save(
+        self, filepath: os.PathLike, hrs_notifications: Dict[str, List[str]]
+    ) -> None:
         """
         Loads the last_maintenance_arc_hrs state
 
@@ -170,7 +176,7 @@ class MaintenanceScheduler:
         notifications_dict = cls.SCHEMA["properties"]
         arc_hours_list = cls.SCHEMA["required"]
         initial_db = {}
-    
+
         for hours in arc_hours_list:
             notifications_data = {}
             for notification in notifications_dict[hours]["required"]:
@@ -218,9 +224,15 @@ class MaintenanceScheduler:
         except jsonschema.ValidationError as exc:
             with open(filepath, "w") as jsonfile:
                 jsonfile.write(json.dumps(cls._get_initial_db(), indent=4))
-            Logger.warning("Writing failed: %s", exc)
+                try:
+                    Logger.warning("Writing failed: %s", exc)
+                except ModuleNotFoundError as e:
+                    pass
         except OSError as err:
-            Logger.warning("Writing failed: %s", err)
+            try:
+                Logger.warning("Writing failed: %s", err)
+            except ModuleNotFoundError as e:
+                pass
 
     @staticmethod
     def _get_hours_int(arc_hours: str) -> int:
@@ -234,10 +246,10 @@ class MaintenanceScheduler:
 
     def notify(self, current_arc_hours: str):
         """Notifies user to maintenance the particulars
-        
+
         Args:
-           current_arc_hours: current arc hour 
-        
+           current_arc_hours: current arc hour
+
         Returns:
             Dict of Notification for Maintenance.
         """

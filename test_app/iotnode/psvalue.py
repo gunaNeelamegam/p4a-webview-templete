@@ -1,6 +1,8 @@
 """API to format the process values for the UI display."""
-
-from kivy.logger import Logger
+try:
+    from kivy.logger import Logger
+except ModuleNotFoundError as e:
+    pass
 from iotnode.faults import FCCM, FDMC, FDPC
 
 
@@ -83,21 +85,10 @@ ENUM_MAP = {
     "ldmc": FDMC,
     "ldpc": FDPC,
     "pm": {0: "Standalone", 1: "PS1", 2: "PS2"},
-    "pg": {
-        1: "Oxygen",
-        3: "H35",
-        5: "Air",
-        6: "Nitrogen",
-        9: "Argon",
-        12: "Auxillary"
-    },
-    "sf": {
-        1: "Oxygen",
-        5: "Air",
-        6: "Nitrogen",
-        10: "H2O"
-    }
+    "pg": {1: "Oxygen", 3: "H35", 5: "Air", 6: "Nitrogen", 9: "Argon", 12: "Auxillary"},
+    "sf": {1: "Oxygen", 5: "Air", 6: "Nitrogen", 10: "H2O"},
 }
+
 
 class ProcessValueFormatter:
     """Process value formatter for displaying on the UI.
@@ -149,7 +140,7 @@ class ProcessValueFormatter:
             "pg": self._enum_conv,
             "sf": self._enum_conv,
             "kw": self._get_kw_output,
-            "cur": self._format_current
+            "cur": self._format_current,
         }
         self.data = self._get_default_data()
 
@@ -341,7 +332,10 @@ class ProcessValueFormatter:
             flow_value = GAS[(cur, pg, sf)]
         except KeyError:
             err_msg = "No mapping available for gas flow values: %s"
-            Logger.warning(err_msg, (cur, pg, sf))
+            try:
+                Logger.warning(err_msg, (cur, pg, sf))
+            except ModuleNotFoundError as e:
+                pass
             return res
 
         res[ps] = "{} slpm/scfh".format(flow_value[flow_ord[ps]])
@@ -378,9 +372,9 @@ class ProcessValueFormatter:
         self.data = process_dt
 
     def get_fault_code(self, data: dict) -> (str, str):
-        """ Return CCM fault code"""
+        """Return CCM fault code"""
         fault_key = "fccm"
-        fault = (self.data.get(fault_key, "-")[0])
+        fault = self.data.get(fault_key, "-")[0]
         code = fault.replace("CCM ", "")
 
         if fault != "-":
