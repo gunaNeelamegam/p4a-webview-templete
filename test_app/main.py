@@ -23,9 +23,9 @@ for recipe in requirements:
     )
 
 if __name__ == "__main__":
+    print('_______________________________--',requirements)
     if "flask" in requirements:
         flask_debug = not realpath(curdir).startswith("/data")
-
         # Flask is run non-threaded since it tries to resolve app classes
         # through pyjnius from request handlers. That doesn't work since the
         # JNI ends up using the Java system class loader in new native
@@ -36,4 +36,5 @@ if __name__ == "__main__":
             filepath=f"{os.curdir}/iotnode/statecharts/main.yml"
         )
         interpreter = Interpreter(statechart)
-        FlaskApp = FlaskApp.IOTNodeFlaskApp(interpreter,version=version)
+        interpreter.attach(print)
+        FlaskApp = FlaskApp.IOTNodeFlaskApp(interpreter, version=version)

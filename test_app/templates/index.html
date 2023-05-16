@@ -2,6 +2,6 @@
 
 {% block body %}
   {% for button_name, link in navigation_btns.items() %}
-    <button formaction="{{ link }}" class="screen-btn">{{ button_name }}</button>
+    <button formaction="{{ link }}" class="screen-btn" onclick="fetchUrl('')">{{ button_name }}</button>
   {% endfor %}
 {% endblock %}

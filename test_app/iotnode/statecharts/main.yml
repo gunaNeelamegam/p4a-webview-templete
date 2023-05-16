@@ -42,7 +42,7 @@ statechart:
                 "app_version": ui.get_app_version(),
                 "fault_code": psvalue.get_fault_code(psvalue.data)[0]
               })
-
+              print('+++++++++++++++++++++++++++++++++++')
             transitions:
               # Gets connection status and data every poll period
               - guard: after(config.get_poll_period())

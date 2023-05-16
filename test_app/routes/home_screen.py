@@ -62,7 +62,7 @@ def index():
         platform="Android" if RUNNING_ON_ANDROID else "Desktop",
         show_add={"is_show": True},
         navigation_btns={
-            "Cuttings": "",
+            "Cuttings": "cutting",
             "System Info": "",
             "Service": "",
             "Configuration": "",
