@@ -17,10 +17,6 @@ from enum import Enum
 
 import jsonschema
 
-try:
-    from kivy.logger import Logger
-except ModuleNotFoundError as e:
-    pass
 from .utils import VResult, validate_ip
 
 
@@ -594,17 +590,11 @@ class Configuration:
             with open(filename, "r") as fp:
                 self.curr_machine = fp.read().strip()
         except OSError as err:
-            try:
-                Logger.warning(err)
-            except ModuleNotFoundError as e:
-                pass
+            print(err)
 
     def update_last_selected_machine(self, filename: str):
         try:
             with open(filename, "w") as fp:
                 fp.write(self.curr_machine)
         except OSError as err:
-            try:
-                Logger.warning("Updating failed: %s", err)
-            except ModuleNotFoundError as e:
-                pass
+            print(err)

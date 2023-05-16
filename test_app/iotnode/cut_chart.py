@@ -5,12 +5,6 @@ file.
 # pylint: disable=import-error
 from typing import NamedTuple, List, Tuple
 from collections import OrderedDict
-
-try:
-    from kivy.logger import Logger
-except ModuleNotFoundError as e:
-    pass
-
 import csv
 
 
@@ -85,10 +79,7 @@ class CutChart:
                     if row[0] == "h" and row[1] == "Rev":
                         return "{}.{}.{}".format(row[3], row[4], row[5])
         except OSError as exc:
-            try:
-                Logger.error(exc)
-            except ModuleNotFoundError as e:
-                pass
+            print(exc)
 
     def load_process_list(self) -> List[InputParams]:
         """Loads and filters cutting row values

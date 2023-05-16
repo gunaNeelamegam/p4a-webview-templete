@@ -11,10 +11,6 @@ import aiohttp
 
 import jsonschema
 
-try:
-    from kivy.logger import Logger
-except ModuleNotFoundError as e:
-    pass
 from jsonrpc_websocket import Server
 from jsonrpc_base import TransportError, ProtocolError
 from .cut_chart_fetcher import CutChartParam
@@ -304,7 +300,7 @@ class IotNodeInterface:
                     self._version = version
                 else:
                     try:
-                        Logger.warning(
+                        print(
                             "Received invalid version type %s", type(version)
                         )
                     except ModuleNotFoundError as e:
@@ -318,7 +314,7 @@ class IotNodeInterface:
             err_path = "/".join(str(i) for i in exc.absolute_path)
             err = "Read data validation failed at /{}".format(err_path)
             try:
-                Logger.warning(err)
+                print(err)
             except ModuleNotFoundError as err:
                 pass
         else:
@@ -340,7 +336,7 @@ class IotNodeInterface:
                 data = await self._ws_client.read_data()
             except (ProtocolError, TransportError, ConnectionError) as exc:
                 try:
-                    Logger.warning(exc)
+                    print(exc)
                 except ModuleNotFoundError as e:
                     pass
                 await self._close()
@@ -379,7 +375,7 @@ class IotNodeInterface:
             err_path = "/".join(str(i) for i in exc.absolute_path)
             err = "List networks validation failed at /{}".format(err_path)
             try:
-                Logger.warning(err)
+                print(err)
             except ModuleNotFoundError as e:
                 pass
             self._send_event_cb("error")
@@ -440,7 +436,7 @@ class IotNodeInterface:
             err_path = "/".join(str(i) for i in exc.absolute_path)
             err = "Dynamic IP Response JSON Validation failed{}".format(err_path)
             try:
-                Logger.warning(err)
+                print(err)
             except ModuleNotFoundError as e:
                 pass
             self._send_event_cb("error")

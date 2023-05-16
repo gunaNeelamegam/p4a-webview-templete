@@ -79,26 +79,29 @@ class IOTNodeFlaskApp:
         flask_app.run(threaded=False, debug=False)
 
     def __init__(self, sismic_interperter: Interpreter, version: Any) -> None:
-        self.init_flask_server()
-        self.interperter = sismic_interperter
-        self.conf_file = os.path.join(self.user_data_dir, self.CONF_FNAME)
+        self.conf_file = os.path.join(self.BASE_PATH, self.CONF_FNAME)
         self.last_selected_machine_fname = os.path.join(
-            self.user_data_dir, self.LSM_FNAME
+            self.BASE_PATH, self.LSM_FNAME
         )
-        print(f'{"#"*20} {self.last_selected_machine_fname}{"#"*20}')
         self.dir_path = os.path.abspath(os.path.dirname(__file__))
         self._maintenance_link_path = os.path.join(
             self.dir_path, self.MAINTENANCE_LINK_FNAME
         )
         self.last_maintenanced_hrs_fname = os.path.join(
-            self.user_data_dir, self.LMH_FNAME
+            self.BASE_PATH, self.LMH_FNAME
         )
         self.cutchart_file = os.path.join(self.dir_path, self.CUTCHART_FNAME)
         self._reverse = False
         self._event_history = []
         self._version = version
+        self._setup_config()
         self._setup_client()
+        self._setup_maintenance()
+        self.interperter = sismic_interperter
         self._setup_interpreter()
+        self.init_flask_server()
+       
+      
 
     def get_app_version(self):
         return self._version
@@ -205,9 +208,6 @@ class IOTNodeFlaskApp:
 
     def injectSelf(self):
         pass
-
-    def get_interperter(self):
-        return self.interperter
 
     @flask_app.route("/")
     def index():

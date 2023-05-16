@@ -1,8 +1,4 @@
 """API to format the process values for the UI display."""
-try:
-    from kivy.logger import Logger
-except ModuleNotFoundError as e:
-    pass
 from iotnode.faults import FCCM, FDMC, FDPC
 
 
@@ -332,10 +328,7 @@ class ProcessValueFormatter:
             flow_value = GAS[(cur, pg, sf)]
         except KeyError:
             err_msg = "No mapping available for gas flow values: %s"
-            try:
-                Logger.warning(err_msg, (cur, pg, sf))
-            except ModuleNotFoundError as e:
-                pass
+            print(err_msg)
             return res
 
         res[ps] = "{} slpm/scfh".format(flow_value[flow_ord[ps]])

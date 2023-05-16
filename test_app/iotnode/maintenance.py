@@ -8,11 +8,6 @@ import json
 import argparse
 
 from typing import Dict, List
-
-try:
-    from kivy.logger import Logger
-except ModuleNotFoundError as e:
-    pass
 import jsonschema
 
 
@@ -224,15 +219,10 @@ class MaintenanceScheduler:
         except jsonschema.ValidationError as exc:
             with open(filepath, "w") as jsonfile:
                 jsonfile.write(json.dumps(cls._get_initial_db(), indent=4))
-                try:
-                    Logger.warning("Writing failed: %s", exc)
-                except ModuleNotFoundError as e:
-                    pass
+                print("Writing failed: %s", exc)
+            
         except OSError as err:
-            try:
-                Logger.warning("Writing failed: %s", err)
-            except ModuleNotFoundError as e:
-                pass
+           print(err)
 
     @staticmethod
     def _get_hours_int(arc_hours: str) -> int:

@@ -23,7 +23,6 @@ for recipe in requirements:
     )
 
 if __name__ == "__main__":
-    print('_______________________________--',requirements)
     if "flask" in requirements:
         flask_debug = not realpath(curdir).startswith("/data")
         # Flask is run non-threaded since it tries to resolve app classes
